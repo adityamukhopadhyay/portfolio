@@ -57,7 +57,7 @@ export function FleetHero({ children }: { children: ReactNode }) {
     let W = 0, H = 0, dpr = 1;
     let hub = { x: 0, y: 0 };
     let RX = 0, RY = 0;
-    let CL = 20; // left edge of the max-w-5xl content column
+    let CL = 20; // left edge of the max-w-7xl content column
     const agents = Array.from({ length: AGENTS }, (_, i) => ({
       a: (Math.PI * 2 * i) / AGENTS + (Math.random() - 0.5) * 0.12,
       drift: (Math.random() < 0.5 ? -1 : 1) * (0.00008 + Math.random() * 0.00012),
@@ -79,7 +79,7 @@ export function FleetHero({ children }: { children: ReactNode }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // The fleet orbits the photo, wherever the layout puts it (desktop: right
       // column; mobile: stacked under the copy). Falls back to the right third.
-      CL = Math.max(20, (W - 1024) / 2);
+      CL = Math.max(20, (W - 1280) / 2);
       const anchor = wrap.querySelector<HTMLElement>("[data-fleet-anchor]");
       if (anchor) {
         const a = anchor.getBoundingClientRect();
@@ -294,7 +294,7 @@ export function FleetHero({ children }: { children: ReactNode }) {
       <div aria-hidden className="grid-paper pointer-events-none absolute inset-0" />
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 opacity-80" />
       <div className="relative">{children}</div>
-      <div className="relative mx-auto max-w-5xl px-5 pb-6">
+      <div className="relative mx-auto max-w-7xl px-5 pb-6">
         <div className="rounded-lg border border-line bg-surface/95 md:bg-surface/80 md:backdrop-blur">
           <div className="flex items-center justify-between border-b border-line px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">
             <span className="flex items-center gap-2"><span className="live-dot" /> fleet trace stream</span>

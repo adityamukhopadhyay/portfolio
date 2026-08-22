@@ -34,9 +34,9 @@ export default async function WorkPage(props: PageProps<"/work/[slug]">) {
 
   return (
     <main>
-      <article className="mx-auto max-w-5xl px-5 pt-12 sm:pt-16">
+      <article className="mx-auto max-w-7xl px-5 pt-12 sm:pt-16">
         {/* ── Header ───────────────────────────────────────────────────── */}
-        <header className="relative max-w-3xl">
+        <header className="relative max-w-4xl">
           <ParallaxNumeral n={idx + 1} />
           <Link href="/#work" className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint hover:text-ink">
             ← Work
@@ -79,7 +79,7 @@ export default async function WorkPage(props: PageProps<"/work/[slug]">) {
           {/* ── Context ─────────────────────────────────────────────────── */}
           {p.context ? (
             <Section title="Context">
-              <Reveal className="prose-tight max-w-3xl text-[16px] leading-relaxed text-muted">
+              <Reveal className="prose-tight max-w-4xl text-[16px] leading-relaxed text-muted">
                 {p.context.map((c) => (
                   <p key={c.slice(0, 24)}>
                     <Rich text={c} />
