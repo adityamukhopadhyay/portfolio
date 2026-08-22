@@ -33,7 +33,7 @@ export default function Home() {
     <main>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <FleetHero>
-        <div className="mx-auto grid max-w-5xl items-center gap-10 px-5 pb-10 pt-14 sm:pt-20 md:grid-cols-[1.25fr_1fr]">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-10 pt-14 sm:pt-20 md:grid-cols-[1.25fr_1fr]">
           <div>
             <p className="rise flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted" style={{ animationDelay: "0ms" }}>
               <span className="live-dot" />
@@ -85,7 +85,7 @@ export default function Home() {
         </div>
       </FleetHero>
 
-      <div className="mx-auto max-w-5xl space-y-24 px-5 pt-16">
+      <div className="mx-auto max-w-7xl space-y-24 px-5 pt-16">
         {/* ── Headline numbers ─────────────────────────────────────────── */}
         <Reveal>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

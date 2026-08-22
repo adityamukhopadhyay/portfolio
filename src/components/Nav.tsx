@@ -11,8 +11,8 @@ const links = [
 export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/95 md:bg-bg/85 md:backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
-        <Link href="/#about" className="serif-lesson text-[19px] text-ink transition-colors hover:text-accent">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5">
+        <Link href="/#about" className="serif-lesson text-[26px] leading-none text-ink transition-colors hover:text-accent">
           Who is {profile.name.first}?
         </Link>
         <nav className="flex items-center gap-1 text-sm">
