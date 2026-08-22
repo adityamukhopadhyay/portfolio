@@ -6,7 +6,7 @@ import { THEMES, heroMetrics, tier1, tier2, readMinutes } from "@/content/projec
 import { FleetHero } from "@/components/FleetHero";
 import { Reveal } from "@/components/Reveal";
 import { Section, Chip } from "@/components/Section";
-import { MetricCard } from "@/components/MetricCard";
+import { StatRail } from "@/components/StatRail";
 import { Spotlight } from "@/components/Spotlight";
 import { WorkGrid } from "@/components/WorkGrid";
 import { CopyButton } from "@/components/CopyButton";
@@ -87,15 +87,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-7xl space-y-24 px-5 pt-16">
         {/* ── Headline numbers ─────────────────────────────────────────── */}
-        <Reveal>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {heroMetrics.map((m, i) => (
-              <Reveal key={m.label} delay={i * 0.06}>
-                <MetricCard m={m} />
-              </Reveal>
-            ))}
-          </div>
-        </Reveal>
+        <StatRail items={heroMetrics} />
 
         {/* ── Intro + signals ──────────────────────────────────────────── */}
         <Section id="about" title="What I actually do">
