@@ -7,6 +7,7 @@ export const profile = {
   company: "Badho Technologies",
   companyUrl: "https://badho.in",
   email: "adul.m.2003@gmail.com",
+  phone: "+91-9981861975",
   links: {
     linkedin: "https://www.linkedin.com/in/adityamukhopadhyay2003/",
     github: "https://github.com/adityamukhopadhyay/",

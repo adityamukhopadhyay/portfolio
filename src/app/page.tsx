@@ -226,11 +226,17 @@ export default function Home() {
           <Reveal>
             <div className="rounded-xl border border-line bg-surface p-6 sm:p-8">
               <p className="serif-lesson text-2xl text-ink sm:text-3xl">Building agents that have to be right, not just impressive? Let&apos;s talk.</p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <a href={`mailto:${profile.email}`} className="font-mono text-[15px] text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent">
                   {profile.email}
                 </a>
                 <CopyButton text={profile.email} label="Copy email" />
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <a href={`tel:${profile.phone.replace(/-/g, "")}`} className="font-mono text-[15px] text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent">
+                  {profile.phone}
+                </a>
+                <CopyButton text={profile.phone} label="Copy number" />
               </div>
               <div className="mt-5 flex flex-wrap gap-3 text-sm">
                 <a className="rounded-md border border-line px-3 py-1.5 text-ink hover:border-rule" href={profile.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>

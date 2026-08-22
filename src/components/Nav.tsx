@@ -12,12 +12,8 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/95 md:bg-bg/85 md:backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
-        <Link
-          href="/"
-          aria-label={`${profile.name.first} ${profile.name.last} — home`}
-          className="serif-lesson inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface text-[15px] text-ink transition-colors hover:border-accent hover:text-accent"
-        >
-          AM
+        <Link href="/#about" className="serif-lesson text-[19px] text-ink transition-colors hover:text-accent">
+          Who is {profile.name.first}?
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {links.map((l) => (
