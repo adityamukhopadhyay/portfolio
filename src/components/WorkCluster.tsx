@@ -117,7 +117,7 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
                 key={n.slug}
                 type="button"
                 className={`node ${isOn ? "node-on" : ""} ${dim ? "node-dim" : ""} node-${n.size}`}
-                style={{ left: `${n.x}%`, top: `${n.y}%`, ["--z" as string]: `${n.z}px`, ["--s" as string]: s.toFixed(3), ["--o" as string]: o.toFixed(2), ["--orb" as string]: `${ORB_PX[n.size]}px` }}
+                style={{ left: `${n.x}%`, top: `${n.y}%`, ["--z" as string]: `${n.z}px`, ["--s" as string]: s.toFixed(3), ["--o" as string]: o.toFixed(2), ["--orb" as string]: `${ORB_PX[n.size]}px`, ["--vf" as string]: n.value.length > 7 ? "0.7" : n.value.length > 4 ? "0.82" : "1" }}
                 aria-describedby="work-panel"
                 aria-pressed={isOn}
                 aria-label={`${item?.title ?? n.slug}: ${n.value} ${n.label}`}
