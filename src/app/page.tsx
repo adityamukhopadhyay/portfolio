@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import { profile } from "@/content/profile";
-import { THEMES, heroMetrics, tier1, tier2 } from "@/content/projects";
+import { THEMES, heroMetrics, tier1, tier2, readMinutes } from "@/content/projects";
 import { FleetHero } from "@/components/FleetHero";
 import { Reveal } from "@/components/Reveal";
 import { Section, Chip } from "@/components/Section";
@@ -24,7 +24,10 @@ function findHeadshot() {
 
 export default function Home() {
   const headshot = findHeadshot();
-  const cards = tier1.map(({ slug, title, short, themes, stack, headline, period, lessons }) => ({ slug, title, short, themes, stack, headline, period, teaser: lessons?.[0] }));
+  const cards = tier1.map((p) => ({
+    slug: p.slug, title: p.title, short: p.short, themes: p.themes, stack: p.stack, headline: p.headline, period: p.period,
+    teaser: p.lessons?.[0], cta: p.cta, readMin: readMinutes(p),
+  }));
 
   return (
     <main>

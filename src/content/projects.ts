@@ -22,6 +22,8 @@ export type Project = {
   period: string;
   stack: string[];
   headline: Metric[];
+  /** Card call-to-action: the one thing a reader would click through to see. */
+  cta?: string;
   // Deep-dive fields (tier 1)
   context?: string[];
   mechanisms?: Mechanism[];
@@ -44,6 +46,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["Agents", "MCP", "Safety & cost"],
     period: "2026 · Badho",
+    cta: "See how 20 agents run a shift unattended",
     stack: ["Python", "Claude Agent SDK", "MCP", "FastAPI", "PostgreSQL", "Supabase", "WAHA", "Freshdesk", "Railway", "React"],
     headline: [
       { value: "−84%", label: "agent cost per day", count: { to: 84, prefix: "−", suffix: "%" } },
@@ -100,6 +103,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["MCP", "Agents", "Safety & cost"],
     period: "2026 · Badho",
+    cta: "See how 100 tools stay in lockstep with the app",
     stack: ["TypeScript", "MCP SDK", "Hasura GraphQL", "REST", "OAuth 2.0 / JWT", "Railway"],
     headline: [
       { value: "100", label: "typed tools", count: { to: 100 } },
@@ -154,6 +158,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["Conversational AI", "Agents", "MCP", "Safety & cost"],
     period: "2026 · Badho · live since Jul 2026",
+    cta: "See why this agent cannot lie about an order",
     stack: ["Python", "Claude Agent SDK", "Buyer MCP", "AiSensy", "Supabase", "Railway"],
     headline: [
       { value: "INR 5.0L", label: "potential value · 475 orders" },
@@ -210,6 +215,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["Pipelines", "Safety & cost", "Conversational AI"],
     period: "2026 · Badho · live since Jul 2026",
+    cta: "See the incident, and the guard that ended it",
     stack: ["Python", "asyncpg", "PostgreSQL (read replica)", "Supabase", "AiSensy", "Railway"],
     headline: [
       { value: "10", label: "order stages", count: { to: 10 } },
@@ -265,6 +271,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["Agents", "MCP", "Safety & cost", "Money paths"],
     period: "2026 · Badho",
+    cta: "See the kill switch that stops the money",
     stack: ["Python", "FastAPI", "MCP", "Claude Haiku 4.5", "Supabase", "Railway", "Vercel", "Next.js"],
     headline: [
       { value: "698 + 370", label: "claims + tickets filed in 24 h" },
@@ -315,6 +322,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["Money paths", "Safety & cost", "Pipelines"],
     period: "2026 · Badho",
+    cta: "See why double credit is physically impossible",
     stack: ["Next.js", "Supabase", "Python poller", "Hasura", "PostgreSQL", "AiSensy", "GA4", "Vercel", "Railway"],
     headline: [
       { value: "361 / 361", label: "bonuses credited, zero misses" },
@@ -365,6 +373,7 @@ export const projects: Project[] = [
     tier: 1,
     themes: ["MCP", "Agents", "Pipelines"],
     period: "2026 · personal",
+    cta: "See how agents audit agents",
     stack: ["Python", "MCP (stdio)", "git", "Claude Code scheduled tasks"],
     headline: [
       { value: "7", label: "read-only tools", count: { to: 7 } },
@@ -469,6 +478,19 @@ export const projects: Project[] = [
 export const tier1 = projects.filter((p) => p.tier === 1);
 export const tier2 = projects.filter((p) => p.tier === 2);
 export const bySlug = (slug: string) => projects.find((p) => p.slug === slug);
+
+// Reading time from the deep-dive's actual words (context + mechanisms + metrics + lessons).
+export function readMinutes(p: Project): number {
+  const text = [
+    ...(p.context ?? []),
+    ...(p.mechanisms ?? []).flatMap((m) => [m.title, m.body]),
+    ...(p.metrics ?? []).flatMap((m) => [m.label, m.note ?? ""]),
+    ...(p.lessons ?? []),
+    p.honesty ?? "",
+  ].join(" ");
+  const words = text.split(/\s+/).filter(Boolean).length;
+  return Math.max(2, Math.round(words / 200));
+}
 
 // Headline numbers for the home page strip. Each says how it was measured.
 export const heroMetrics: Metric[] = [

@@ -16,6 +16,8 @@ export type WorkCard = {
   headline: Metric[];
   period: string;
   teaser?: string;
+  cta?: string;
+  readMin?: number;
 };
 
 export function WorkGrid({ items, themes }: { items: WorkCard[]; themes: Theme[] }) {
@@ -89,8 +91,12 @@ export function WorkGrid({ items, themes }: { items: WorkCard[]; themes: Theme[]
                           </div>
                         </div>
                       ) : null}
-                      <div className="mt-auto pt-4 text-[13px] font-medium text-accent">
-                        Read the deep-dive <span aria-hidden className="inline-block transition-transform group-hover:translate-x-1">→</span>
+                      <div className="mt-auto flex flex-wrap items-center gap-3 pt-5">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-[13px] font-semibold text-accent transition-[background-color,color,border-color,box-shadow,transform] duration-300 group-hover:-translate-y-0.5 group-hover:border-accent group-hover:bg-accent group-hover:text-accent-ink group-hover:shadow-[0_12px_30px_-12px_var(--accent)]">
+                          {p.cta ?? "Read the deep-dive"}
+                          <span aria-hidden className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+                        </span>
+                        {p.readMin ? <span className="font-mono text-[11px] text-faint">{p.readMin} min read</span> : null}
                       </div>
                     </div>
                   </Spotlight>
