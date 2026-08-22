@@ -2,13 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-// A live neural network behind every page: neurons in loose layers, sparse
-// synapses, and signals that propagate layer to layer, lighting each neuron
-// they pass. Low alpha on purpose — it should be felt, not read. Canvas 2D,
-// DPR-capped, paused off-screen/hidden, static under reduced motion.
+// A faint neural network far behind the page: neurons with depth, soft curved
+// synapses, slow flow-state drift, and signals that propagate layer to layer.
+// Everything is low alpha; the foreground sits on translucent surfaces so the
+// network reads as running behind frosted glass. Canvas 2D, DPR-capped,
+// paused off-screen/hidden, static under reduced motion.
 
-type Neuron = { x: number; y: number; bx: number; by: number; layer: number; p: number; glow: number; r: number };
-type Synapse = { a: number; b: number };
+type Neuron = { bx: number; by: number; x: number; y: number; layer: number; depth: number; p: number; q: number; glow: number; r: number };
+type Synapse = { a: number; b: number; bow: number }; // bow = perpendicular offset of the curve's control point
 type Signal = { s: number; t: number; v: number };
 
 export function NeuralField() {
@@ -34,7 +35,7 @@ export function NeuralField() {
     let W = 0, H = 0, dpr = 1;
     let neurons: Neuron[] = [];
     let synapses: Synapse[] = [];
-    let out: number[][] = []; // outgoing synapse indices per neuron
+    let out: number[][] = [];
     const signals: Signal[] = [];
     const mouse = { x: -9999, y: -9999 };
     let lastScroll = window.scrollY, scrollV = 0;
@@ -45,26 +46,34 @@ export function NeuralField() {
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const layers = W < 768 ? 4 : W < 1400 ? 6 : 8;
-      const per = W < 768 ? 7 : 9;
+      const layers = W < 768 ? 4 : W < 1400 ? 6 : 7;
+      const per = W < 768 ? 6 : 8;
       neurons = []; synapses = []; out = [];
       for (let l = 0; l < layers; l++) {
         const cx = ((l + 0.5) / layers) * W;
         for (let i = 0; i < per; i++) {
           const cy = ((i + 0.5) / per) * H;
-          const x = cx + (Math.random() - 0.5) * (W / layers) * 0.7;
-          const y = cy + (Math.random() - 0.5) * (H / per) * 0.8;
-          neurons.push({ x, y, bx: x, by: y, layer: l, p: Math.random() * Math.PI * 2, glow: 0, r: 1.2 + Math.random() * 1.3 });
+          const x = cx + (Math.random() - 0.5) * (W / layers) * 0.8;
+          const y = cy + (Math.random() - 0.5) * (H / per) * 0.9;
+          const depth = 0.35 + Math.random() * 0.65; // 0.35 = far, 1 = near
+          neurons.push({ bx: x, by: y, x, y, layer: l, depth, p: Math.random() * Math.PI * 2, q: Math.random() * Math.PI * 2, glow: 0, r: 0.9 + depth * 1.5 });
         }
       }
       out = neurons.map(() => []);
-      // each neuron feeds 2–3 neurons in the next layer, preferring near ones
       for (let i = 0; i < neurons.length; i++) {
         const n = neurons[i];
         if (n.layer === layers - 1) continue;
-        const next = neurons.map((m, j) => ({ j, d: m.layer === n.layer + 1 ? Math.hypot(m.x - n.x, m.y - n.y) : Infinity })).filter((o) => o.d < Infinity).sort((a, b) => a.d - b.d);
-        const k = 2 + (Math.random() < 0.5 ? 1 : 0);
-        for (const o of next.slice(0, k)) { out[i].push(synapses.length); synapses.push({ a: i, b: o.j }); }
+        const next = neurons
+          .map((m, j) => ({ j, d: m.layer === n.layer + 1 ? Math.hypot(m.bx - n.bx, m.by - n.by) : Infinity }))
+          .filter((o) => o.d < Infinity)
+          .sort((a, b) => a.d - b.d);
+        const k = 2 + (Math.random() < 0.4 ? 1 : 0);
+        for (const o of next.slice(0, k)) {
+          const len = o.d;
+          const bow = (Math.random() < 0.5 ? -1 : 1) * (0.12 + Math.random() * 0.16) * len; // gentle, stable curve
+          out[i].push(synapses.length);
+          synapses.push({ a: i, b: o.j, bow });
+        }
       }
     };
     build();
@@ -75,79 +84,96 @@ export function NeuralField() {
     const onLeaveDoc = () => { mouse.x = -9999; mouse.y = -9999; };
     window.addEventListener("mousemove", onMouse);
     document.addEventListener("mouseleave", onLeaveDoc);
-    const onScroll = () => { const s = window.scrollY; scrollV += (s - lastScroll) * 0.04; lastScroll = s; };
+    const onScroll = () => { const s = window.scrollY; scrollV += (s - lastScroll) * 0.03; lastScroll = s; };
     window.addEventListener("scroll", onScroll, { passive: true });
 
     const fire = (i: number) => {
       neurons[i].glow = 1;
-      for (const s of out[i]) if (Math.random() < 0.8) signals.push({ s, t: 0, v: 0.9 + Math.random() * 0.6 });
+      for (const s of out[i]) if (Math.random() < 0.75) signals.push({ s, t: 0, v: 0.7 + Math.random() * 0.5 });
+    };
+
+    // point on the quadratic curve of synapse s at t
+    const curveAt = (s: Synapse, t: number) => {
+      const a = neurons[s.a], b = neurons[s.b];
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+      const cx = mx + (-dy / len) * s.bow, cy = my + (dx / len) * s.bow;
+      const u = 1 - t;
+      return { x: u * u * a.x + 2 * u * t * cx + t * t * b.x, y: u * u * a.y + 2 * u * t * cy + t * t * b.y, cx, cy };
     };
 
     const draw = (now: number) => {
       ctx.clearRect(0, 0, W, H);
-      // synapses
-      ctx.lineWidth = 1;
+      ctx.lineCap = "round";
+      // synapses — soft curves, alpha by depth
       for (const s of synapses) {
         const a = neurons[s.a], b = neurons[s.b];
+        const d = Math.min(a.depth, b.depth);
         const g = Math.max(a.glow, b.glow);
-        ctx.globalAlpha = 0.07 + g * 0.25;
+        const c = curveAt(s, 0.5);
+        ctx.globalAlpha = 0.025 + d * 0.035 + g * 0.16;
         ctx.strokeStyle = g > 0.05 ? accent : faint;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.lineWidth = 0.8 + d * 0.8;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.cx, c.cy, b.x, b.y); ctx.stroke();
       }
-      // signals
+      // signals — small, soft
       for (const sg of signals) {
-        const s = synapses[sg.s]; const a = neurons[s.a], b = neurons[s.b];
-        const x = a.x + (b.x - a.x) * sg.t, y = a.y + (b.y - a.y) * sg.t;
-        const t0 = Math.max(0, sg.t - 0.12);
-        const x0 = a.x + (b.x - a.x) * t0, y0 = a.y + (b.y - a.y) * t0;
-        ctx.globalAlpha = 0.55; ctx.strokeStyle = accent; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
-        ctx.globalAlpha = 0.95; ctx.fillStyle = accent;
-        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+        const s = synapses[sg.s];
+        const p = curveAt(s, sg.t);
+        const p0 = curveAt(s, Math.max(0, sg.t - 0.1));
+        ctx.globalAlpha = 0.35; ctx.strokeStyle = accent; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        ctx.globalAlpha = 0.7; ctx.fillStyle = accent;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2); ctx.fill();
       }
-      // neurons
+      // neurons — faint dots; lit ones get a soft radial glow
       for (const n of neurons) {
         const dx = n.x - mouse.x, dy = n.y - mouse.y;
-        const d = Math.hypot(dx, dy);
-        const near = d < 170 ? 1 - d / 170 : 0;
-        const tw = 0.6 + 0.4 * Math.sin(now / 1100 + n.p);
-        const lit = Math.max(n.glow, near * 0.7);
+        const dist = Math.hypot(dx, dy);
+        const near = dist < 200 ? (1 - dist / 200) * 0.5 : 0;
+        const tw = 0.65 + 0.35 * Math.sin(now / 1600 + n.p);
+        const lit = Math.max(n.glow, near);
         if (lit > 0.03) {
-          ctx.globalAlpha = lit * 0.22; ctx.fillStyle = accent;
-          ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 9 * lit, 0, Math.PI * 2); ctx.fill();
+          const R = 6 + 16 * lit * n.depth;
+          const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, R);
+          grd.addColorStop(0, accent); grd.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.globalAlpha = 0.18 * lit; ctx.fillStyle = grd;
+          ctx.beginPath(); ctx.arc(n.x, n.y, R, 0, Math.PI * 2); ctx.fill();
         }
-        ctx.globalAlpha = 0.22 * tw + lit * 0.7;
+        ctx.globalAlpha = (0.08 + n.depth * 0.1) * tw + lit * 0.45;
         ctx.fillStyle = lit > 0.05 ? accent : faint;
-        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + lit * 1.4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + lit * 1.2, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
     };
 
-    let raf = 0, last = performance.now(), running = !document.hidden, nextFire = 600;
+    let raf = 0, last = performance.now(), running = !document.hidden, nextFire = 900;
     const step = (now: number) => {
       raf = requestAnimationFrame(step);
       if (!running) { last = now; return; }
       const dt = Math.min(50, now - last); last = now;
-      scrollV *= 0.9;
+      scrollV *= 0.92;
       for (const n of neurons) {
-        n.x = n.bx + Math.sin(now / 4000 + n.p) * 5;
-        n.y = n.by + Math.cos(now / 5200 + n.p) * 5 - scrollV * 0.25 * (1 + n.layer * 0.1);
-        n.by -= scrollV * 0.02;
-        if (n.by < -30) n.by += H + 60; if (n.by > H + 30) n.by -= H + 60;
-        n.glow = Math.max(0, n.glow - dt / 900);
+        // flow-state drift: slow, wide, per-neuron phase; far neurons move less
+        const amp = 10 + 14 * n.depth;
+        n.x = n.bx + Math.sin(now / 6500 + n.p) * amp + Math.sin(now / 2900 + n.q) * amp * 0.3;
+        n.y = n.by + Math.cos(now / 7800 + n.q) * amp * 0.8 + Math.cos(now / 3300 + n.p) * amp * 0.25;
+        n.by -= scrollV * (0.05 + 0.2 * n.depth);
+        if (n.by < -40) n.by += H + 80; if (n.by > H + 40) n.by -= H + 80;
+        n.glow = Math.max(0, n.glow - dt / 1400);
       }
       nextFire -= dt;
       if (nextFire <= 0) {
         const inputs = neurons.map((n, i) => (n.layer === 0 ? i : -1)).filter((i) => i >= 0);
         if (inputs.length) fire(inputs[Math.floor(Math.random() * inputs.length)]);
-        nextFire = 500 + Math.random() * 900;
+        nextFire = 900 + Math.random() * 1400;
       }
       for (let i = signals.length - 1; i >= 0; i--) {
         const sg = signals[i];
-        sg.t += (dt / 1000) * sg.v * 1.6;
+        sg.t += (dt / 1000) * sg.v * 0.9;
         if (sg.t >= 1) { fire(synapses[sg.s].b); signals.splice(i, 1); }
       }
-      if (signals.length > 80) signals.splice(0, signals.length - 80);
+      if (signals.length > 60) signals.splice(0, signals.length - 60);
       draw(now);
     };
     const onVis = () => { running = !document.hidden; };
@@ -163,5 +189,5 @@ export function NeuralField() {
     };
   }, []);
 
-  return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 z-0 opacity-90" />;
+  return <canvas ref={ref} aria-hidden className="neural pointer-events-none fixed inset-0 z-0" />;
 }

@@ -27,4 +27,4 @@ export const LINKS: [string, string][] = [
   ["delhivery-ops-autopilot", "live-money-paths"],
 ];
 
-export const ORB_PX = { lg: 112, md: 92, sm: 76 } as const;
+export const ORB_PX = { lg: 116, md: 96, sm: 84 } as const;

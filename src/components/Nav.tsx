@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
-import { profile } from "@/content/profile";
 
 const links = [
   { href: "/#work", label: "Work" },
