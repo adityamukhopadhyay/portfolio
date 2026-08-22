@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+/* The theme script in layout.tsx always stamps data-theme; the media query is
+   the no-JS fallback so the page is never the wrong colour. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f3f3f0;
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --faint: #9a9a9a;
+  --line: #e6e6e2;
+  --rule: #b0b0b0;
+  --accent: #0d9470;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff3ea;
+  --warn: #b8741a;
+  --warn-soft: #f8ecd6;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212;
+    --surface: #1a1a1a;
+    --surface-2: #222221;
+    --ink: #ededea;
+    --muted: #a6a6a2;
+    --faint: #72726e;
+    --line: #2b2b2a;
+    --rule: #4b4b49;
+    --accent: #34a884;
+    --accent-ink: #0b1a15;
+    --accent-soft: #17302a;
+    --warn: #cf9540;
+    --warn-soft: #2f2414;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --surface: #1a1a1a;
+  --surface-2: #222221;
+  --ink: #ededea;
+  --muted: #a6a6a2;
+  --faint: #72726e;
+  --line: #2b2b2a;
+  --rule: #4b4b49;
+  --accent: #34a884;
+  --accent-ink: #0b1a15;
+  --accent-soft: #17302a;
+  --warn: #cf9540;
+  --warn-soft: #2f2414;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: var(--font-nunito), "Avenir Next", "Nunito Sans", system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: var(--font-serif), "Instrument Serif", Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Prose helpers used by the deep-dive pages. */
+.prose-tight p + p {
+  margin-top: 0.75rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-2);
+  padding: 0.08em 0.35em;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── motion ──────────────────────────────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.live-dot { position: relative; display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: var(--accent); }
+.live-dot::after {
+  content: ""; position: absolute; inset: 0; border-radius: 9999px; background: var(--accent);
+  animation: pulse-ring 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+
+@keyframes ticker-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.ticker-line { animation: ticker-in 0.35s ease-out both; }
+
+/* Diagram nodes */
+.dg-node { cursor: pointer; transition: opacity 0.25s ease, filter 0.25s ease; outline: none; }
+.dg-node:focus-visible rect { stroke: var(--accent); stroke-width: 2; }
+.dg-dim { opacity: 0.35; }
+.dg-edge { transition: opacity 0.25s ease, stroke 0.25s ease, stroke-width 0.25s ease; }
+@keyframes node-pulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.12); opacity: 0; }
+}
+.dg-pulse { transform-box: fill-box; transform-origin: center; animation: node-pulse 1.4s ease-out infinite; }
+
+/* Grid paper behind the hero */
+.grid-paper {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--line) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--line) 70%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 20%, transparent 75%);
+}
+
+.serif-lesson { font-family: var(--font-serif); font-style: italic; letter-spacing: -0.005em; }
+
+/* Timeline */
+.timeline-dot { box-shadow: 0 0 0 4px var(--bg); }
+
+/* ── liveliness ─────────────────────────────────────────────────────── */
+.tilt { perspective: 900px; }
+.tilt-inner {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.tilt:hover .tilt-inner { transition: transform 0.12s ease-out; }
+.tilt-glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.16), transparent 55%);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.tilt:hover .tilt-glare { opacity: 1; }
+
+.nav-link { position: relative; }
+.nav-link::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 1px;
+  background: var(--accent); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-link:hover::after { transform: scaleX(1); }
+
+/* numbers light up when you hover the line they live in */
+.num-glow strong { transition: color 0.25s ease; }
+.num-glow:hover strong { color: var(--accent); }
+
+@keyframes scan {
+  from { transform: translateY(-100%); opacity: 0.9; }
+  to { transform: translateY(2400%); opacity: 0; }
+}
+.scanline {
+  background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--accent) 22%, transparent), transparent);
+  animation: scan 1.6s cubic-bezier(0.4, 0, 0.2, 1) 1 both;
+}
+
+/* theme crossfade */
+body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt-inner { transform: none !important; }
+  .tilt-glare { display: none; }
+}
+
+/* The resume sheet is paper in both themes — it is the PDF, not a panel. */
+.paper {
+  --ink: #1a1a1a; --muted: #6b6b6b; --faint: #9a9a9a; --line: #e6e6e2; --rule: #b0b0b0;
+  --surface-2: #f3f3f0; --accent: #0d9470;
+  background: #ffffff; color: var(--ink); border: 1px solid #e2e2de;
+  color-scheme: light;
+}
+
+/* GPU-friendly hints for the things that move */
+.rise, .ticker-line, .tilt-inner, .dg-node, .dg-edge { backface-visibility: hidden; }
+
+/* ── reveal (CSS transitions; see lib/useInViewOnce) ─────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-y, 18px));
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-in { opacity: 1; transform: none; will-change: auto; }
+.draw-rule { transform: scaleX(0); transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+.draw-rule-in { transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .draw-rule { transform: none; transition: none; }
+}
