@@ -475,6 +475,20 @@ export const projects: Project[] = [
   },
 ];
 
+// Serialisable subset handed to client components (cards, the cluster panel).
+export type WorkCard = {
+  slug: string;
+  title: string;
+  short: string;
+  themes: Theme[];
+  stack: string[];
+  headline: Metric[];
+  period: string;
+  teaser?: string;
+  cta?: string;
+  readMin?: number;
+};
+
 export const tier1 = projects.filter((p) => p.tier === 1);
 export const tier2 = projects.filter((p) => p.tier === 2);
 export const bySlug = (slug: string) => projects.find((p) => p.slug === slug);

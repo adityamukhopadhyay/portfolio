@@ -3,22 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import type { Metric, Theme } from "@/content/projects";
+import type { Theme, WorkCard } from "@/content/projects";
 import { Chip } from "./Section";
 import { Spotlight } from "./Spotlight";
 
-export type WorkCard = {
-  slug: string;
-  title: string;
-  short: string;
-  themes: Theme[];
-  stack: string[];
-  headline: Metric[];
-  period: string;
-  teaser?: string;
-  cta?: string;
-  readMin?: number;
-};
 
 export function WorkGrid({ items, themes }: { items: WorkCard[]; themes: Theme[] }) {
   const [active, setActive] = useState<Theme | "All">("All");

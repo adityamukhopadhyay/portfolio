@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import { profile } from "@/content/profile";
-import { THEMES, heroMetrics, tier1, tier2, readMinutes } from "@/content/projects";
+import { heroMetrics, tier1, tier2, readMinutes } from "@/content/projects";
 import { FleetHero } from "@/components/FleetHero";
 import { Reveal } from "@/components/Reveal";
 import { Section, Chip } from "@/components/Section";
 import { StatRail } from "@/components/StatRail";
 import { Spotlight } from "@/components/Spotlight";
-import { WorkGrid } from "@/components/WorkGrid";
+import { WorkSwitch } from "@/components/WorkSwitch";
 import { CopyButton } from "@/components/CopyButton";
 import { Rich } from "@/components/Rich";
 import { Tilt } from "@/components/Tilt";
@@ -125,9 +125,9 @@ export default function Home() {
         </Section>
 
         {/* ── Selected work ────────────────────────────────────────────── */}
-        <Section id="work" title="Selected work" kicker="Production systems, each with a deep-dive: architecture, the guards, and the numbers — including the unflattering ones.">
+        <Section id="work" title="Selected work" kicker="Seven production systems. Hover a number to see the project; click to read how it was built — guards, numbers and all. Prefer a list? Switch to cards.">
           <Reveal>
-            <WorkGrid items={cards} themes={THEMES} />
+            <WorkSwitch items={cards} />
           </Reveal>
         </Section>
 
