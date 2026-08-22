@@ -120,7 +120,7 @@ code {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
 }
-.rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 
 @keyframes pulse-ring {
   0% { transform: scale(0.6); opacity: 0.7; }

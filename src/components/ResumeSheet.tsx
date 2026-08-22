@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { resume, resumeAsPlainText } from "@/content/resume";
 import { Rich } from "./Rich";
@@ -187,7 +188,9 @@ export function ResumeSheet() {
           </motion.div>
         </Tilt>
 
-        {/* Pre-send checklist overlay */}
+        {/* Pre-send checklist overlay — portaled to <body> so no transformed
+            ancestor can become its containing block. */}
+        {typeof document !== "undefined" ? createPortal(
         <AnimatePresence>
           {running ? (
             <motion.div
@@ -223,7 +226,7 @@ export function ResumeSheet() {
               </div>
             </motion.div>
           ) : null}
-        </AnimatePresence>
+        </AnimatePresence>, document.body) : null}
       </div>
     </div>
   );
