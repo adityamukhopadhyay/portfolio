@@ -24,6 +24,8 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
   const [pinned, setPinned] = useState(false);
   const [themeHL, setThemeHL] = useState<Theme | null>(null);
   const [live, setLive] = useState(false);
+  const enterT = useRef<number | null>(null);
+  const leaveT = useRef<number | null>(null);
 
   const bySlug = useMemo(() => Object.fromEntries(items.map((i) => [i.slug, i])), [items]);
   const related = useMemo(() => new Set(LINKS.flatMap(([a, b]) => (a === active ? [b] : b === active ? [a] : []))), [active]);
@@ -44,13 +46,24 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.setProperty("--rx", `${(-py * 9).toFixed(2)}deg`);
-    el.style.setProperty("--ry", `${(px * 11).toFixed(2)}deg`);
+    el.style.setProperty("--rx", `${(-py * 5).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${(px * 6).toFixed(2)}deg`);
+  }
+  // Hover intent (70 ms) and a leave grace period (140 ms) so the pointer can
+  // travel to the panel without the reveal collapsing — WCAG 1.4.13.
+  function hoverIn(slug: string) {
+    if (leaveT.current) { clearTimeout(leaveT.current); leaveT.current = null; }
+    if (enterT.current) clearTimeout(enterT.current);
+    enterT.current = window.setTimeout(() => setActive(slug), 70);
   }
   function onLeave() {
     stage.current?.style.setProperty("--rx", "0deg");
     stage.current?.style.setProperty("--ry", "0deg");
-    if (!pinned) setActive(null);
+    if (enterT.current) { clearTimeout(enterT.current); enterT.current = null; }
+    if (!pinned) leaveT.current = window.setTimeout(() => setActive(null), 140);
+  }
+  function panelEnter() {
+    if (leaveT.current) { clearTimeout(leaveT.current); leaveT.current = null; }
   }
   function release() {
     setPinned(false);
@@ -109,7 +122,7 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
                 aria-pressed={isOn}
                 aria-label={`${item?.title ?? n.slug}: ${n.value} ${n.label}`}
                 onPointerEnter={(e) => {
-                  if (e.pointerType !== "touch" && !pinned) setActive(n.slug);
+                  if (e.pointerType !== "touch" && !pinned) hoverIn(n.slug);
                 }}
                 onFocus={() => setActive(n.slug)}
                 onClick={(e) => {
@@ -135,7 +148,7 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
       </div>
 
       {/* ── Panel ─────────────────────────────────────────────────────── */}
-      <div id="work-panel" aria-live="polite" className="relative min-h-[420px] rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:self-start">
+      <div id="work-panel" aria-live="polite" onPointerEnter={panelEnter} onPointerLeave={() => { if (!pinned) leaveT.current = window.setTimeout(() => setActive(null), 140); }} className="relative min-h-[420px] rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:self-start">
         <AnimatePresence mode="wait" initial={false}>
           {current ? (
             <motion.div
@@ -143,7 +156,7 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
               initial={reduce ? false : "hidden"}
               animate="show"
               exit={reduce ? undefined : "exit"}
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } }, exit: { opacity: 0, y: 8, transition: { duration: 0.16 } } }}
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.03 } }, exit: { opacity: 0, y: 8, transition: { duration: 0.16 } } }}
             >
               <Row>
                 <div className="flex items-start justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">

@@ -257,7 +257,8 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
   -webkit-tap-highlight-color: transparent;
 }
 .cluster-live .node { will-change: transform; }
-.node-dim { opacity: calc(var(--o) * 0.4); }
+.node-dim { opacity: calc(var(--o) * 0.45); }
+.node-dim .node-core { transform: scale(0.96); }
 .node-on { z-index: 2; }
 .node-float { display: block; width: 100%; height: 100%; animation: float 7s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
@@ -266,8 +267,8 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
   width: 100%; height: 100%; border-radius: 9999px;
   transform: scale(1); transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.node:hover .node-core, .node-on .node-core { transform: scale(1.12); }
-.node:active .node-core { transform: scale(0.96); transition-duration: 0.12s; }
+.node:hover .node-core, .node-on .node-core { transform: scale(1.08); }
+.node:active .node-core { transform: scale(0.97); transition-duration: 0.08s; }
 .orb {
   position: absolute; inset: 0; border-radius: 9999px;
   background: radial-gradient(circle at 32% 28%, var(--accent-soft), var(--surface) 72%);

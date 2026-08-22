@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Nunito_Sans, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { AmbientField } from "@/components/AmbientField";
+import { NeuralField } from "@/components/NeuralField";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { profile } from "@/content/profile";
 import "./globals.css";
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-dvh flex flex-col">
-        <AmbientField />
+        <NeuralField />
         <ScrollProgress />
         <div className="relative z-10 flex min-h-dvh flex-col">
           <Nav />
