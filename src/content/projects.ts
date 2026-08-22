@@ -373,7 +373,7 @@ export const projects: Project[] = [
     ],
     context: [
       "I run many projects, each with a handoff doc that a new session reads first. Docs go stale; sessions get forgotten; \"what did I do yesterday\" becomes an archaeology task. This server answers it from ground truth: it walks two folders on every call, discovers every git repo, every `*HANDOFF*.md`, and every Claude Code session whose recorded working directory falls under them — **nothing project-specific is a static list**.",
-      "It powers two scheduled routines: a daily cross-project work report, and a companion that detects handoff docs older than their project's last activity and messages the responsible session to fix them. The research for this website was done through it.",
+      "It powers two scheduled routines: a daily cross-project work report, and a companion that detects handoff docs older than their project's last activity and messages the responsible session to fix them.",
     ],
     mechanisms: [
       {
@@ -392,7 +392,7 @@ export const projects: Project[] = [
     metrics: [
       { value: "26 / 27", label: "git repos / handoff docs discovered", note: "Live scan result on 2026-08-22, across two scan roots. The number changes whenever a folder appears." },
       { value: "7", label: "tools", note: "sessions, commits, handoff entries, freshness, known projects, dashboard links, and one bundled work-report call.", count: { to: 7 } },
-      { value: "0", label: "network calls, secrets, writes", note: "Local stdio only; `git log` and file reads. Registered both project-scoped and globally so scheduled tasks can use it.", count: { to: 0 } },
+      { value: "0", label: "network calls, secrets, writes", note: "Local only — `git log` and file reads; nothing leaves the machine.", count: { to: 0 } },
     ],
     honesty: "This is infrastructure for my own workflow, not a product; its value is that the reports it produces are verified against git and session logs rather than remembered. Its one known defect is documented in its own handoff.",
     lessons: ["A report you can't verify is a story.", "Tell consumers what you cannot see."],

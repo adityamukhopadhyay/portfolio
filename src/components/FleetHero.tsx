@@ -298,7 +298,7 @@ export function FleetHero({ children }: { children: ReactNode }) {
         <div className="rounded-lg border border-line bg-surface/95 md:bg-surface/80 md:backdrop-blur">
           <div className="flex items-center justify-between border-b border-line px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">
             <span className="flex items-center gap-2"><span className="live-dot" /> fleet trace stream</span>
-            <span className="normal-case tracking-normal">{reduced ? "static" : "illustration · real event vocabulary · simulated events"}</span>
+            <span className="normal-case tracking-normal">{reduced ? "static" : "simulated illustration"}</span>
           </div>
           <ul className="h-[7rem] overflow-hidden px-3 py-2 font-mono text-[11.5px] leading-[1.2rem]">
             {lines.map((l) => (

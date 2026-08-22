@@ -112,13 +112,13 @@ export const resume = {
     },
   ] as ResumeRole[],
 
-  // The pre-send checklist that was actually run on the canonical PDF
-  // (SESSION_HANDOFF.md → "Pre-send checklist"). Shown as the CTA animation.
+  // Checks that were actually run on the canonical PDF before it was published.
+  // Shown as the "Open the PDF" animation.
   checklist: [
-    { label: "page count == 1", detail: "no spill to page 2" },
-    { label: "no tofu glyphs", detail: "rupee written as INR — the embedded font predates U+20B9" },
-    { label: "12 / 12 key numbers survive text extraction", detail: "84%, −96%, 800 assertions, INR 5.0L, 475, $152.50, 361/361, 698, 2,143, 100 tools, 85,000+, 170,000+" },
-    { label: "5 link annotations intact", detail: "mailto · LinkedIn ×2 · GitHub ×2" },
+    { label: "Fits on one page", detail: "nothing spills to a second page" },
+    { label: "Reads cleanly as plain text", detail: "applicant-tracking systems get every line" },
+    { label: "All key figures present", detail: "84%, −96%, INR 5.0L, $152.50, 361/361, 2,143, 100 tools, 85,000+, 170,000+" },
+    { label: "Links work", detail: "email · LinkedIn · GitHub" },
   ],
 };
 

@@ -18,7 +18,7 @@ export const profile = {
 
   intro: [
     "I'm an AI Engineer at Badho, a B2B distribution platform in India. My work is the unglamorous half of AI: agents that run unattended for a full working day, MCP servers that real products call, WhatsApp agents that talk to thousands of retailers — and the guards, ledgers and kill switches that keep all of it honest.",
-    "Everything here ran in production. Every number was measured against git, a database or a live dashboard, and each one says how it was measured. Where a number is flattering but not causal, I say that too.",
+    "Everything here ran in production. Every number was measured, and each one says how. Where a figure is flattering but not causal, I say so.",
   ],
 
   // The five things that actually differentiate the work. First person, no hedging.

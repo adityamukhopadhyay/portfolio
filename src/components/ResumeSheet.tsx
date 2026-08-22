@@ -142,7 +142,7 @@ export function ResumeSheet() {
               className={`relative rounded-full px-3.5 py-1.5 transition-colors ${view === v ? "text-accent-ink" : "text-muted hover:text-ink"}`}
             >
               {view === v ? <motion.span layoutId="resume-tab" className="absolute inset-0 rounded-full bg-accent" transition={{ type: "spring", stiffness: 420, damping: 34 }} /> : null}
-              <span className="relative">{v === "web" ? "Web view" : "What an ATS sees"}</span>
+              <span className="relative">{v === "web" ? "Web view" : "ATS view"}</span>
             </button>
           ))}
         </div>
@@ -178,8 +178,7 @@ export function ResumeSheet() {
                 <motion.div key="ats" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="relative overflow-hidden rounded-[6px] border border-line bg-surface">
                   {!reduce ? <div aria-hidden className="scanline pointer-events-none absolute inset-x-0 top-0 h-10" /> : null}
                   <div className="flex items-center justify-between border-b border-line px-4 py-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">
-                    <span>text extraction · reading order: sidebar, then main column</span>
-                    <span className="normal-case tracking-normal">no tables · no images · INR, never ₹</span>
+                    <span>plain text · what a parser reads</span>
                   </div>
                   <pre className="overflow-x-auto whitespace-pre-wrap px-5 py-4 font-mono text-[12px] leading-[1.55] text-ink">{resumeAsPlainText()}</pre>
                 </motion.div>
@@ -203,7 +202,7 @@ export function ResumeSheet() {
               aria-live="polite"
             >
               <div className="w-[min(92%,520px)] rounded-xl border border-line bg-surface p-5 shadow-2xl">
-                <div className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-faint">pre-send checklist · run on this exact PDF</div>
+                <div className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-faint">checking the PDF</div>
                 <ul className="mt-3 space-y-2 font-mono text-[12.5px]">
                   {resume.checklist.map((c, i) => {
                     const state = i < step ? "done" : i === step ? "run" : "wait";
@@ -221,7 +220,7 @@ export function ResumeSheet() {
                   })}
                 </ul>
                 <div className={`mt-3 font-mono text-[12px] transition-opacity ${step >= resume.checklist.length ? "opacity-100" : "opacity-0"}`}>
-                  <span className="text-accent">PASS</span> <span className="text-muted">— opening the PDF →</span>
+                  <span className="text-accent">Ready</span> <span className="text-muted">— opening the PDF →</span>
                 </div>
               </div>
             </motion.div>

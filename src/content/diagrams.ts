@@ -288,7 +288,7 @@ export const diagrams: Record<string, DiagramSpec> = {
       sessions: "The raw session logs. The server peeks each candidate's cwd rather than trusting folder names, which is how sessions started from brand-new folders are caught.",
       git: "Commit history per discovered repo. It can't see uncommitted work — which in worktrees can be thousands of lines — so consumers are told to also check the working tree.",
       tools: "Everything is read-only, local, and makes no network calls. The server's own handoff documents a known omission in one date-range query rather than hiding it, and instructs consumers to reconcile against a second source.",
-      report: "A scheduled routine that writes 'what did I work on yesterday' across every project, with commit counts, sessions and handoff entries — the research for this website was done with it.",
+      report: "A scheduled routine that writes 'what did I work on yesterday' across every project, with commit counts, sessions and handoff entries.",
       nudge: "A companion routine that finds handoff docs older than their project's last activity and messages the responsible session to update them. Agents auditing agents.",
     },
   },
