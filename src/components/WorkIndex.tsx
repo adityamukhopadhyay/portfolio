@@ -24,19 +24,26 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
   const current = active ? items.find((i) => i.slug === active) ?? null : null;
   const index = current ? items.findIndex((i) => i.slug === current.slug) : -1;
 
-  // The row crossing a thin band around 45% of the viewport is the active one.
+  // The row under the viewport's focal line (48% down) is the active one.
+  // A plain scroll handler: seven rect reads per event, no frame dependency.
   useEffect(() => {
-    const els = [...rows.current.values()];
-    if (!els.length) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (hit) setActive((hit.target as HTMLElement).dataset.slug ?? null);
-      },
-      { rootMargin: "-44% 0px -44% 0px", threshold: [0, 0.25, 0.5, 1] },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    let last: string | null = null;
+    const pick = () => {
+      const focal = window.innerHeight * 0.48;
+      let best: string | null = null, bestD = Infinity, first = Infinity, lastBottom = -Infinity;
+      rows.current.forEach((el, slug) => {
+        const r = el.getBoundingClientRect();
+        first = Math.min(first, r.top); lastBottom = Math.max(lastBottom, r.bottom);
+        const d = focal >= r.top && focal <= r.bottom ? 0 : Math.min(Math.abs(focal - r.top), Math.abs(focal - r.bottom));
+        if (d < bestD) { bestD = d; best = slug; }
+      });
+      if (focal < first || focal > lastBottom) return; // outside the list: keep whatever is shown
+      if (best && best !== last) { last = best; setActive(best); }
+    };
+    pick();
+    window.addEventListener("scroll", pick, { passive: true });
+    window.addEventListener("resize", pick);
+    return () => { window.removeEventListener("scroll", pick); window.removeEventListener("resize", pick); };
   }, [items]);
 
   function onRow(slug: string) {
