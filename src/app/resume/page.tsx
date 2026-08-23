@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ResumePage() {
   return (
     <main>
-      <div className="mx-auto max-w-5xl px-5 pt-12 sm:pt-16">
+      <div className="mx-auto max-w-4xl px-5 pt-12 sm:pt-16">
         <p className="rise font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Resume · one page</p>
         <h1 className="rise mt-3 text-[34px] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink sm:text-[44px]" style={{ animationDelay: "80ms" }}>
           {resume.name.first} {resume.name.last}

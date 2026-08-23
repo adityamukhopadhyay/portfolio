@@ -12,21 +12,21 @@ type View = "web" | "ats";
 
 function SideHead({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-1.5 mt-4 border-b border-rule/60 pb-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted first:mt-0">{children}</h3>
+    <h3 className="mb-3 mt-8 border-b border-line pb-1.5 text-[10.5px] font-medium uppercase tracking-[0.2em] text-faint first:mt-0">{children}</h3>
   );
 }
 
 function Sheet() {
   const r = resume;
   return (
-    <div className="sheet paper relative rounded-[6px] px-6 py-7 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.55)] sm:px-9 sm:py-9">
+    <div className="sheet paper relative rounded-xl px-7 py-10 sm:px-12 sm:py-14">
       {/* name block */}
       <div className="text-center">
-        <div className="text-[30px] leading-none tracking-tight sm:text-[34px]">
+        <div className="text-[32px] leading-none tracking-tight sm:text-[38px]">
           <span className="font-normal text-muted">{r.name.first}</span> <span className="font-bold">{r.name.last}</span>
         </div>
-        <div className="mt-1.5 text-[12px] text-muted">{r.subtitle}</div>
-        <div className="mt-1 text-[11.5px]">
+        <div className="mt-3 text-[12.5px] text-muted">{r.subtitle}</div>
+        <div className="mt-2 text-[12px] text-muted">
           <a className="hover:text-accent" href={`mailto:${r.contact.email}`}>{r.contact.email}</a>
           <span className="mx-2 text-faint">|</span>
           {r.contact.phone}
@@ -35,15 +35,15 @@ function Sheet() {
           <span className="mx-2 text-faint">|</span>
           <a className="hover:text-accent" href={r.contact.github.href} target="_blank" rel="noreferrer">{r.contact.github.label}</a>
         </div>
-        <div className="mx-auto mt-3 h-px w-full bg-ink/70" />
+        <div className="mx-auto mt-6 h-px w-full bg-rule/50" />
       </div>
 
-      <div className="mt-4 grid gap-7 text-[12.5px] leading-[1.4] sm:grid-cols-[31%_1fr] sm:gap-8">
+      <div className="mt-8 grid gap-10 text-[13px] leading-[1.7] sm:grid-cols-[29%_1fr] sm:gap-12">
         {/* sidebar */}
         <aside>
           <SideHead>Education</SideHead>
           {r.sidebar.education.map((e) => (
-            <div key={e.head} className="mb-2.5">
+            <div key={e.head} className="mb-4">
               <div className="font-semibold">{e.head}</div>
               <div>{e.body}</div>
               <div className="text-[11.5px] text-muted">{e.meta}</div>
@@ -51,21 +51,21 @@ function Sheet() {
           ))}
           <SideHead>Links</SideHead>
           {r.sidebar.links.map((l) => (
-            <div key={l.head} className="mb-2">
+            <div key={l.head} className="mb-3">
               <div className="font-semibold">{l.head}</div>
               <a className="text-accent hover:underline" href={l.href} target="_blank" rel="noreferrer">{l.body}</a>
             </div>
           ))}
           <SideHead>Skills</SideHead>
           {r.sidebar.skills.map((s) => (
-            <div key={s.head} className="mb-2.5">
+            <div key={s.head} className="mb-4">
               <div className="font-semibold">{s.head}</div>
               <div className="num-glow">{s.body}</div>
             </div>
           ))}
           <SideHead>Projects</SideHead>
           {r.sidebar.projects.map((p) => (
-            <div key={p.head} className="mb-3">
+            <div key={p.head} className="mb-5">
               <div className="font-semibold">{p.head}</div>
               <div className="text-[11.5px] text-muted">{p.meta}</div>
               <div className="num-glow mt-0.5"><Rich text={p.body} /></div>
@@ -79,16 +79,16 @@ function Sheet() {
           <p>{r.summary}</p>
           <SideHead>Work Experience</SideHead>
           {r.roles.map((role) => (
-            <div key={role.title} className="mb-3.5">
+            <div key={role.title} className="mb-7">
               <div className="flex items-baseline justify-between gap-3">
-                <div className="text-[13.5px] font-semibold">{role.title}</div>
+                <div className="text-[14px] font-semibold">{role.title}</div>
                 <div className="shrink-0 text-[11.5px] text-muted">{role.date}</div>
               </div>
               <ul className="mt-1">
                 {role.items.map((it, i) => (
                   <li
                     key={i}
-                    className={`num-glow flex gap-1.5 ${it.kind === "sub" ? "mt-2.5 font-semibold" : it.kind === "leaf" ? "mt-1 pl-3" : "mt-1.5"}`}
+                    className={`num-glow flex gap-2 ${it.kind === "sub" ? "mt-4 font-semibold" : it.kind === "leaf" ? "mt-1.5 pl-3" : "mt-2"}`}
                   >
                     <span className="shrink-0 text-muted">{it.kind === "leaf" ? "○" : "•"}</span>
                     <span><Rich text={it.text} /></span>

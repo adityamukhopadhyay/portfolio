@@ -211,12 +211,12 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
   .tilt-glare { display: none; }
 }
 
-/* The resume sheet is paper in both themes — it is the PDF, not a panel. */
+/* The resume sheet: a quiet, slightly raised surface that follows the theme. */
 .paper {
-  --ink: #1a1a1a; --muted: #6b6b6b; --faint: #9a9a9a; --line: #e6e6e2; --rule: #b0b0b0;
-  --surface-2: #f3f3f0; --accent: #0d9470;
-  background: #ffffff; color: var(--ink); border: 1px solid #e2e2de;
-  color-scheme: light;
+  background: color-mix(in oklab, var(--surface) 92%, var(--bg));
+  color: var(--ink);
+  border: 1px solid color-mix(in oklab, var(--line) 80%, transparent);
+  box-shadow: 0 40px 120px -60px rgba(0, 0, 0, 0.6), inset 0 1px 0 color-mix(in oklab, var(--ink) 4%, transparent);
 }
 
 /* GPU-friendly hints for the things that move */
