@@ -99,8 +99,8 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
                 <span aria-hidden className="idx-arrow pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 font-mono text-[18px] text-accent sm:right-6">→</span>
                 {/* fills the tall step: a glyph for the project and its stack, desktop only */}
                 <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 hidden items-end justify-between px-6 pb-5 lg:flex">
-                  <span className="idx-stack font-mono text-[10.5px] uppercase tracking-[0.14em] text-faint">{p.stack.slice(0, 4).join(" · ")}</span>
-                  <ProjectGlyph slug={p.slug} className="idx-glyph h-[110px] w-[220px]" />
+                  <span className="idx-stack max-w-[42%] font-mono text-[10.5px] uppercase tracking-[0.14em] text-faint">{p.stack.slice(0, 4).join(" · ")}</span>
+                  <ProjectGlyph slug={p.slug} className="idx-glyph h-[168px] w-[336px]" />
                 </div>
               </div>
 
