@@ -11,6 +11,8 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/95 md:bg-bg/85 md:backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5">
+        {/* plain anchor on purpose: a same-page hash through <Link> does not scroll */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/#about" className="serif-lesson text-[26px] leading-none text-ink transition-colors hover:text-accent">
           Who Am I?
         </a>
