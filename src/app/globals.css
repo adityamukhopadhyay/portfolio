@@ -237,69 +237,41 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
   .draw-rule { transform: none; transition: none; }
 }
 
-/* ── project cluster (flat, reliable hit-testing) ────────────────────── */
-.cluster { touch-action: manipulation; --px: 0; --py: 0; }
-.node {
-  position: absolute;
-  /* the button is larger than the orb so near-misses still count; it never moves */
-  width: calc(var(--orb) + 18px); height: calc(var(--orb) + 18px);
-  transform: translate(-50%, -50%) scale(var(--s));
-  opacity: var(--o);
-  transition: opacity 0.3s ease;
-  border: 0; background: transparent; padding: 0; cursor: pointer; outline: none;
-  -webkit-tap-highlight-color: transparent;
+/* ── project index (editorial rows) ──────────────────────────────────── */
+.idx-row { position: relative; transition: opacity 0.25s ease; }
+.idx-dim { opacity: 0.55; }
+.idx-hit { position: relative; overflow: hidden; }
+.idx-hit::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--accent-soft), transparent 60%);
+  opacity: 0; transition: opacity 0.3s ease;
 }
-.node-dim { opacity: calc(var(--o) * 0.5); }
-.node-on { z-index: 2; }
-/* visual layer: idle float + pointer parallax by depth (near orbs move more) */
-.node-float {
-  display: block; width: 100%; height: 100%;
-  transform: translate(calc(var(--px) * var(--d) * -14px), calc(var(--py) * var(--d) * -10px));
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+.idx-hit::after {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
+  transform: scaleY(0); transform-origin: center; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.node-float::before { content: ""; }
-.node-core {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  width: calc(100% - 18px); height: calc(100% - 18px); margin: 9px; border-radius: 9999px;
-  animation: float 7s ease-in-out infinite;
-  animation-delay: inherit; animation-duration: inherit;
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+.idx-on .idx-hit::before, .idx-hit:hover::before { opacity: 1; }
+.idx-on .idx-hit::after, .idx-hit:hover::after { transform: scaleY(1); }
+.idx-hit > * { position: relative; }
+.idx-title { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.idx-on .idx-title, .idx-hit:hover .idx-title { transform: translateX(6px); }
+.idx-num { transition: color 0.25s ease; }
+.idx-on .idx-num, .idx-hit:hover .idx-num { color: var(--accent); }
+.idx-fig { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; }
+.idx-fig > span:first-child { transition: color 0.25s ease; }
+.idx-on .idx-fig > span:first-child, .idx-hit:hover .idx-fig > span:first-child { color: var(--accent); }
+.idx-arrow { opacity: 0; transform: translate(-8px, -50%); transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (min-width: 1024px) {
+  .idx-on .idx-fig, .idx-hit:hover .idx-fig { transform: translateX(-28px); }
+  .idx-on .idx-arrow, .idx-hit:hover .idx-arrow { opacity: 1; transform: translate(0, -50%); }
 }
-@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-.node:hover .node-core, .node-on .node-core { transform: scale(1.08); }
-.node:active .node-core { transform: scale(0.97); transition-duration: 0.08s; }
-.node-dim .node-core { transform: scale(0.96); }
-.orb {
-  position: absolute; inset: 0; border-radius: 9999px;
-  background: radial-gradient(circle at 32% 28%, var(--accent-soft), var(--surface) 72%);
-  border: 1px solid var(--rule);
-}
-.node-sm .orb { border-color: var(--faint); }
-.orb::after {
-  content: ""; position: absolute; inset: -1px; border-radius: 9999px;
-  box-shadow: 0 0 0 1px var(--accent), 0 18px 60px -18px var(--accent), 0 0 40px -6px var(--accent);
-  opacity: 0; transition: opacity 0.25s ease;
-}
-.node:hover .orb::after, .node-on .orb::after { opacity: 0.8; }
-.node:focus-visible .orb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.value {
-  position: relative; font-family: var(--font-mono); font-weight: 500; color: var(--ink);
-  font-size: calc(20px * var(--vf, 1)); line-height: 1; letter-spacing: -0.01em; white-space: nowrap;
-}
-.node-lg .value { font-size: calc(24px * var(--vf, 1)); }
-.node-sm .value { font-size: calc(17px * var(--vf, 1)); }
-.label { position: relative; margin-top: 5px; font-size: 10.5px; line-height: 1.1; color: var(--muted); text-align: center; padding: 0 6px; }
-.node-sm .label { font-size: 9.5px; }
-@media (max-width: 1023px) {
-  .node { width: calc(var(--orb) * 0.78 + 18px); height: calc(var(--orb) * 0.78 + 18px); }
-  .value { font-size: calc(16px * var(--vf, 1)); } .node-lg .value { font-size: calc(19px * var(--vf, 1)); } .node-sm .value { font-size: calc(14px * var(--vf, 1)); }
-  .label { font-size: 9.5px; } .node-sm .label { font-size: 8.5px; }
-  .node-float { transform: none; }
-}
+.idx-hit:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+.idx-hit:active { transform: scale(0.995); }
+@keyframes idx-expand { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.idx-expand { animation: idx-expand 0.25s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .node-core { animation: none; transition: none; }
-  .node-float { transform: none; transition: none; }
-  .node { transition: none; }
+  .idx-title, .idx-fig, .idx-arrow, .idx-hit::before, .idx-hit::after { transition: none; }
+  .idx-expand { animation: none; }
 }
 
 /* ── panel swap (CSS-driven, independent of JS animation frames) ─────── */
