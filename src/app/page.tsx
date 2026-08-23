@@ -125,7 +125,7 @@ export default function Home() {
         </Section>
 
         {/* ── Selected work ────────────────────────────────────────────── */}
-        <Section id="work" title="Selected work" kicker="Seven production systems. Hover a row to see the project; click to read how it was built — guards, numbers and all.">
+        <Section id="work" title="Selected work" kicker="Seven production systems. Scroll through them — each one takes its turn on the right; click any to read how it was built, guards, numbers and all.">
           <Reveal>
             <WorkSwitch items={cards} />
           </Reveal>

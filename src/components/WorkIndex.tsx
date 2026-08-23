@@ -2,52 +2,48 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { CLUSTER } from "@/content/cluster";
 import { THEMES, type Theme, type WorkCard } from "@/content/projects";
 import { Chip } from "./Section";
 
-// An editorial index of the seven projects: full-width rows (title, hook,
-// headline figure). Hover a row → the card on the right reveals the project
-// with its CTA; click → deep-dive. On touch, a tap expands the row inline.
+// Scroll-driven project index. Each project is a tall step in the left column;
+// the step crossing the viewport's focal band becomes active and the sticky
+// card on the right reveals it — so scrolling the section walks through every
+// project. Hover also activates; click opens the deep-dive.
 
 const hoverable = () => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
 
 export function WorkIndex({ items }: { items: WorkCard[] }) {
   const router = useRouter();
   const [active, setActive] = useState<string | null>(null);
-  const [pinned, setPinned] = useState(false);
   const [themeHL, setThemeHL] = useState<Theme | null>(null);
-  const leaveT = useRef<number | null>(null);
+  const rows = useRef<Map<string, HTMLLIElement>>(new Map());
 
   const figures = useMemo(() => Object.fromEntries(CLUSTER.map((n) => [n.slug, n])), []);
   const current = active ? items.find((i) => i.slug === active) ?? null : null;
+  const index = current ? items.findIndex((i) => i.slug === current.slug) : -1;
 
-  function clearLeave() {
-    if (leaveT.current) { clearTimeout(leaveT.current); leaveT.current = null; }
-  }
-  function hoverIn(slug: string) {
-    clearLeave();
-    if (!pinned) setActive(slug);
-  }
-  function scheduleLeave() {
-    clearLeave();
-    if (!pinned) leaveT.current = window.setTimeout(() => setActive(null), 140);
-  }
-  function release() {
-    setPinned(false);
-    setActive(null);
-  }
+  // The row crossing a thin band around 45% of the viewport is the active one.
+  useEffect(() => {
+    const els = [...rows.current.values()];
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (hit) setActive((hit.target as HTMLElement).dataset.slug ?? null);
+      },
+      { rootMargin: "-44% 0px -44% 0px", threshold: [0, 0.25, 0.5, 1] },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [items]);
+
   function onRow(slug: string) {
-    if (hoverable()) router.push(`/work/${slug}`);
-    else if (pinned && active === slug) release();
-    else {
-      setActive(slug);
-      setPinned(true);
-    }
+    if (hoverable() || active === slug) router.push(`/work/${slug}`);
+    else setActive(slug);
   }
   function onKey(e: KeyboardEvent<HTMLElement>, slug: string) {
-    if (e.key === "Escape") release();
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       router.push(`/work/${slug}`);
@@ -56,41 +52,48 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr] lg:gap-8">
-      {/* ── Index ─────────────────────────────────────────────────────── */}
-      <ol className="idx divide-y divide-line rounded-2xl border border-line bg-surface" onPointerLeave={scheduleLeave} onPointerEnter={clearLeave}>
+      {/* ── Steps ─────────────────────────────────────────────────────── */}
+      <ol className="idx divide-y divide-line rounded-2xl border border-line bg-surface">
         {items.map((p, i) => {
           const f = figures[p.slug];
           const isOn = active === p.slug;
           const dim = (active && !isOn) || (themeHL && !p.themes.includes(themeHL));
-          const expanded = isOn && pinned;
           return (
-            <li key={p.slug} className={`idx-row ${isOn ? "idx-on" : ""} ${dim ? "idx-dim" : ""}`}>
+            <li
+              key={p.slug}
+              data-slug={p.slug}
+              ref={(el) => {
+                if (el) rows.current.set(p.slug, el);
+                else rows.current.delete(p.slug);
+              }}
+              className={`idx-row ${isOn ? "idx-on" : ""} ${dim ? "idx-dim" : ""}`}
+            >
               <div
                 role="link"
                 tabIndex={0}
                 aria-describedby="work-panel"
                 aria-current={isOn ? "true" : undefined}
-                className="idx-hit grid cursor-pointer grid-cols-[2.2rem_1fr_auto] items-center gap-x-4 px-5 py-5 outline-none sm:px-6 sm:py-6"
-                onPointerEnter={(e) => { if (e.pointerType !== "touch") hoverIn(p.slug); }}
-                onFocus={() => hoverIn(p.slug)}
+                className="idx-hit grid cursor-pointer grid-cols-[2.2rem_1fr_auto] items-center gap-x-4 px-5 py-6 outline-none sm:px-6 lg:min-h-[38vh]"
+                onPointerEnter={(e) => { if (e.pointerType !== "touch") setActive(p.slug); }}
+                onFocus={() => setActive(p.slug)}
                 onClick={() => onRow(p.slug)}
                 onKeyDown={(e) => onKey(e, p.slug)}
               >
                 <span className="idx-num font-mono text-[11px] text-faint">{String(i + 1).padStart(2, "0")}</span>
                 <span className="min-w-0">
-                  <span className="idx-title block text-[19px] font-semibold leading-snug text-ink sm:text-[21px]">{p.title}</span>
-                  <span className="mt-1 block truncate text-[13px] text-muted">{p.cta ?? p.short}</span>
+                  <span className="idx-title block text-[19px] font-semibold leading-snug text-ink sm:text-[22px]">{p.title}</span>
+                  <span className="mt-1.5 block text-[13.5px] text-muted">{p.cta ?? p.short}</span>
                 </span>
                 <span className="idx-fig text-right">
-                  <span className="block font-mono text-[20px] font-medium leading-none tracking-tight text-ink sm:text-[24px]">{f?.value ?? p.headline[0]?.value}</span>
+                  <span className="block font-mono text-[20px] font-medium leading-none tracking-tight text-ink sm:text-[26px]">{f?.value ?? p.headline[0]?.value}</span>
                   <span className="mt-1 block text-[11px] text-muted">{f?.label ?? p.headline[0]?.label}</span>
                 </span>
                 <span aria-hidden className="idx-arrow pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 font-mono text-[18px] text-accent sm:right-6">→</span>
               </div>
 
-              {/* touch: inline expansion */}
-              {expanded ? (
-                <div className="idx-expand border-t border-line px-5 pb-5 pt-4 sm:px-6 lg:hidden">
+              {/* phones: the active step expands inline (the card is desktop-only) */}
+              {isOn ? (
+                <div className="idx-expand border-t border-line px-5 pb-6 pt-4 sm:px-6 lg:hidden">
                   <p className="text-[14px] leading-relaxed text-muted">{p.short}</p>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {p.headline.slice(0, 3).map((m) => (
@@ -110,21 +113,18 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
         })}
       </ol>
 
-      {/* ── Card (desktop) ────────────────────────────────────────────── */}
-      <div
-        id="work-panel"
-        aria-live="polite"
-        onPointerEnter={clearLeave}
-        onPointerLeave={scheduleLeave}
-        className="relative hidden min-h-[420px] rounded-2xl border border-line bg-surface p-6 lg:sticky lg:top-24 lg:block lg:self-start"
-      >
+      {/* ── Sticky card (desktop) ─────────────────────────────────────── */}
+      <div id="work-panel" aria-live="polite" className="relative hidden min-h-[440px] rounded-2xl border border-line bg-surface p-6 lg:sticky lg:top-24 lg:block lg:self-start">
         {current ? (
           <div key={current.slug} className="panel-swap">
             <div className="panel-row flex items-start justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">
               <span>{current.themes.join(" · ")}</span>
-              <span>{current.period.split(" · ").slice(0, 2).join(" · ")}</span>
+              <span className="shrink-0">{String(index + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</span>
             </div>
-            <h3 className="panel-row mt-3 text-[22px] font-semibold leading-snug text-ink">{current.title}</h3>
+            <div className="panel-row mt-3 h-px w-full bg-line">
+              <div className="h-px bg-accent transition-[width] duration-500 ease-out" style={{ width: `${((index + 1) / items.length) * 100}%` }} />
+            </div>
+            <h3 className="panel-row mt-4 text-[22px] font-semibold leading-snug text-ink">{current.title}</h3>
             <p className="panel-row mt-2 text-[14.5px] leading-relaxed text-muted">{current.short}</p>
             <div className="panel-row mt-4 grid grid-cols-3 gap-2">
               {current.headline.slice(0, 3).map((m) => (
@@ -153,7 +153,7 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
         ) : (
           <div key="idle" className="panel-swap">
             <p className="panel-row serif-lesson text-[26px] leading-tight text-ink sm:text-[30px]">Seven systems, one rule: the agent has to be right.</p>
-            <p className="panel-row mt-3 text-[14px] leading-relaxed text-muted">Each row is one production system and the number it&apos;s known for. Hover a row to see what it is; click to read how it was built — and what went wrong on the way.</p>
+            <p className="panel-row mt-3 text-[14px] leading-relaxed text-muted">Scroll — each project takes its turn here. Click any row to read how it was built, and what went wrong on the way.</p>
             <div className="panel-row mt-6 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Themes</div>
             <div className="panel-row mt-2 flex flex-wrap gap-1.5" onMouseLeave={() => setThemeHL(null)}>
               {THEMES.filter((t) => items.some((i) => i.themes.includes(t))).map((t) => (
