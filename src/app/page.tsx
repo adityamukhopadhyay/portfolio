@@ -52,9 +52,9 @@ export default function Home() {
             </p>
             <div className="rise mt-8 flex flex-wrap gap-3" style={{ animationDelay: "400ms" }}>
               <Magnetic>
-                <Link href="/#work" className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-[0_10px_30px_-12px_var(--accent)] transition-transform hover:-translate-y-0.5">
+                <a href="#work" className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-[0_10px_30px_-12px_var(--accent)] transition-transform hover:-translate-y-0.5">
                   See the work
-                </Link>
+                </a>
               </Magnetic>
               <Magnetic>
                 <Link href="/resume" className="inline-block rounded-md border border-line px-4 py-2 text-sm text-ink transition-colors hover:border-rule">
