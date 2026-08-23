@@ -290,3 +290,43 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
 .neural { opacity: 0.8; filter: blur(2px); transform: scale(1.04); will-change: transform; }
 @media (min-width: 1024px) { .neural { filter: blur(3.5px); } }
 .bg-surface { background-color: color-mix(in oklab, var(--surface) 94%, transparent); }
+
+/* ── project glyphs (inline SVG in each index step) ──────────────────── */
+.glyph { color: var(--muted); stroke: currentColor; stroke-width: 1; font-family: var(--font-mono); }
+.idx-glyph { opacity: 0.45; transition: opacity 0.4s ease; }
+.idx-on .idx-glyph, .idx-hit:hover .idx-glyph { opacity: 0.95; }
+.idx-stack { opacity: 0.6; transition: opacity 0.3s ease; }
+.idx-on .idx-stack, .idx-hit:hover .idx-stack { opacity: 1; }
+.glyph .g-faint { opacity: 0.5; }
+.glyph .g-frame { fill: color-mix(in oklab, var(--surface-2) 70%, transparent); stroke: var(--rule); }
+.glyph .g-gate { fill: color-mix(in oklab, var(--accent-soft) 70%, transparent); stroke: var(--rule); }
+.glyph .g-hub { fill: var(--surface); stroke: var(--accent); stroke-width: 1.2; }
+.glyph .g-accent-stroke { stroke: var(--accent); }
+.glyph .g-accent-fill { fill: var(--accent); stroke: none; }
+.glyph .g-tick { stroke: var(--rule); }
+.glyph .g-node { fill: var(--surface); stroke: var(--faint); }
+.glyph .g-node-warn { stroke: var(--warn); fill: var(--warn-soft); }
+.glyph .g-dot { fill: var(--faint); stroke: none; }
+.glyph .g-cell { fill: var(--rule); stroke: none; opacity: 0.55; }
+.glyph .g-cell-on { fill: var(--accent); opacity: 0.9; }
+.glyph .g-label { fill: var(--faint); stroke: none; font-size: 7.5px; letter-spacing: 0.08em; }
+.glyph .g-lever { stroke: var(--faint); transform-origin: 84px 60px; transform: rotate(-24deg); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.3s ease; }
+.glyph .g-after { opacity: 0.35; }
+/* draw-in when the step is active */
+.glyph .g-draw { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.idx-on .glyph .g-draw { animation: g-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes g-draw { to { stroke-dashoffset: 0; } }
+.idx-on .glyph .g-node { animation: g-pulse 2.4s ease-in-out infinite; }
+@keyframes g-pulse { 0%, 100% { stroke: var(--faint); } 50% { stroke: var(--accent); fill: var(--accent-soft); } }
+.idx-on .glyph .g-node-warn { animation: none; }
+.idx-on .glyph .g-cell-on { animation: g-blink 3s ease-in-out infinite; }
+@keyframes g-blink { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.35; } }
+.idx-on .glyph .g-lever { transform: rotate(0deg); stroke: var(--accent); }
+.idx-on .glyph .g-after { opacity: 1; }
+.idx-on .glyph .g-lens { animation: g-scan 3.2s ease-in-out infinite; }
+@keyframes g-scan { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(52px); } }
+@media (prefers-reduced-motion: reduce) {
+  .glyph .g-draw { stroke-dashoffset: 0; animation: none !important; }
+  .glyph .g-node, .glyph .g-cell-on, .glyph .g-lens { animation: none !important; }
+  .glyph .g-lever { transition: none; }
+}

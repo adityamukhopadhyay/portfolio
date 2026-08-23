@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { CLUSTER } from "@/content/cluster";
 import { THEMES, type Theme, type WorkCard } from "@/content/projects";
 import { Chip } from "./Section";
+import { ProjectGlyph } from "./ProjectGlyph";
 
 // Scroll-driven project index. Each project is a tall step in the left column;
 // the step crossing the viewport's focal band becomes active and the sticky
@@ -80,7 +81,7 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
                 tabIndex={0}
                 aria-describedby="work-panel"
                 aria-current={isOn ? "true" : undefined}
-                className="idx-hit grid cursor-pointer grid-cols-[2.2rem_1fr_auto] items-center gap-x-4 px-5 py-6 outline-none sm:px-6 lg:min-h-[38vh]"
+                className="idx-hit grid cursor-pointer grid-cols-[2.2rem_1fr_auto] items-start gap-x-4 px-5 py-6 outline-none sm:px-6 lg:min-h-[38vh] lg:items-start lg:pt-8"
                 onPointerEnter={(e) => { if (e.pointerType !== "touch") setActive(p.slug); }}
                 onFocus={() => setActive(p.slug)}
                 onClick={() => onRow(p.slug)}
@@ -96,6 +97,11 @@ export function WorkIndex({ items }: { items: WorkCard[] }) {
                   <span className="mt-1 block text-[11px] text-muted">{f?.label ?? p.headline[0]?.label}</span>
                 </span>
                 <span aria-hidden className="idx-arrow pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 font-mono text-[18px] text-accent sm:right-6">→</span>
+                {/* fills the tall step: a glyph for the project and its stack, desktop only */}
+                <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 hidden items-end justify-between px-6 pb-5 lg:flex">
+                  <span className="idx-stack font-mono text-[10.5px] uppercase tracking-[0.14em] text-faint">{p.stack.slice(0, 4).join(" · ")}</span>
+                  <ProjectGlyph slug={p.slug} className="idx-glyph h-[110px] w-[220px]" />
+                </div>
               </div>
 
               {/* phones: the active step expands inline (the card is desktop-only) */}
