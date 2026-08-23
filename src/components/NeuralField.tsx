@@ -26,7 +26,7 @@ export function NeuralField() {
     const readColors = () => {
       const cs = getComputedStyle(document.documentElement);
       accent = cs.getPropertyValue("--accent").trim() || accent;
-      faint = cs.getPropertyValue("--faint").trim() || faint;
+      faint = cs.getPropertyValue("--muted").trim() || faint;
     };
     readColors();
     const mo = new MutationObserver(readColors);
@@ -47,7 +47,7 @@ export function NeuralField() {
       canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const layers = W < 768 ? 4 : W < 1400 ? 6 : 7;
-      const per = W < 768 ? 6 : 8;
+      const per = W < 768 ? 7 : 10;
       neurons = []; synapses = []; out = [];
       for (let l = 0; l < layers; l++) {
         const cx = ((l + 0.5) / layers) * W;
@@ -56,7 +56,7 @@ export function NeuralField() {
           const x = cx + (Math.random() - 0.5) * (W / layers) * 0.8;
           const y = cy + (Math.random() - 0.5) * (H / per) * 0.9;
           const depth = 0.35 + Math.random() * 0.65; // 0.35 = far, 1 = near
-          neurons.push({ bx: x, by: y, x, y, layer: l, depth, p: Math.random() * Math.PI * 2, q: Math.random() * Math.PI * 2, glow: 0, r: 0.9 + depth * 1.5 });
+          neurons.push({ bx: x, by: y, x, y, layer: l, depth, p: Math.random() * Math.PI * 2, q: Math.random() * Math.PI * 2, glow: 0, r: 1.1 + depth * 1.8 });
         }
       }
       out = neurons.map(() => []);
@@ -111,9 +111,9 @@ export function NeuralField() {
         const d = Math.min(a.depth, b.depth);
         const g = Math.max(a.glow, b.glow);
         const c = curveAt(s, 0.5);
-        ctx.globalAlpha = 0.025 + d * 0.035 + g * 0.16;
+        ctx.globalAlpha = 0.07 + d * 0.07 + g * 0.22;
         ctx.strokeStyle = g > 0.05 ? accent : faint;
-        ctx.lineWidth = 0.8 + d * 0.8;
+        ctx.lineWidth = 0.9 + d * 0.9;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.cx, c.cy, b.x, b.y); ctx.stroke();
       }
       // signals — small, soft
@@ -121,10 +121,10 @@ export function NeuralField() {
         const s = synapses[sg.s];
         const p = curveAt(s, sg.t);
         const p0 = curveAt(s, Math.max(0, sg.t - 0.1));
-        ctx.globalAlpha = 0.35; ctx.strokeStyle = accent; ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.55; ctx.strokeStyle = accent; ctx.lineWidth = 1.4;
         ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-        ctx.globalAlpha = 0.7; ctx.fillStyle = accent;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.9; ctx.fillStyle = accent;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctx.fill();
       }
       // neurons — faint dots; lit ones get a soft radial glow
       for (const n of neurons) {
@@ -134,13 +134,13 @@ export function NeuralField() {
         const tw = 0.65 + 0.35 * Math.sin(now / 1600 + n.p);
         const lit = Math.max(n.glow, near);
         if (lit > 0.03) {
-          const R = 6 + 16 * lit * n.depth;
+          const R = 8 + 22 * lit * n.depth;
           const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, R);
           grd.addColorStop(0, accent); grd.addColorStop(1, "rgba(0,0,0,0)");
-          ctx.globalAlpha = 0.18 * lit; ctx.fillStyle = grd;
+          ctx.globalAlpha = 0.26 * lit; ctx.fillStyle = grd;
           ctx.beginPath(); ctx.arc(n.x, n.y, R, 0, Math.PI * 2); ctx.fill();
         }
-        ctx.globalAlpha = (0.08 + n.depth * 0.1) * tw + lit * 0.45;
+        ctx.globalAlpha = (0.16 + n.depth * 0.2) * tw + lit * 0.5;
         ctx.fillStyle = lit > 0.05 ? accent : faint;
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r + lit * 1.2, 0, Math.PI * 2); ctx.fill();
       }
@@ -166,7 +166,7 @@ export function NeuralField() {
       if (nextFire <= 0) {
         const inputs = neurons.map((n, i) => (n.layer === 0 ? i : -1)).filter((i) => i >= 0);
         if (inputs.length) fire(inputs[Math.floor(Math.random() * inputs.length)]);
-        nextFire = 900 + Math.random() * 1400;
+        nextFire = 600 + Math.random() * 900;
       }
       for (let i = signals.length - 1; i >= 0; i--) {
         const sg = signals[i];

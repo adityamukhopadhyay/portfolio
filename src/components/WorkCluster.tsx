@@ -3,35 +3,30 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from "react";
-import { useReducedMotion } from "motion/react";
-import { CLUSTER, LINKS, ORB_PX } from "@/content/cluster";
+import { CLUSTER, ORB_PX } from "@/content/cluster";
 import { THEMES, type Theme, type WorkCard } from "@/content/projects";
 import { Chip } from "./Section";
 
-// The "number constellation": seven orbs at different depths, each showing one
-// headline figure. Hover (or tap) reveals the project in the side panel; click
-// (or the panel CTA) opens the deep-dive. Pointer tilt is CSS variables only —
-// no React state on mouse move — so every frame is compositor work.
+// Seven independent projects as floating orbs, each showing its headline
+// figure. Hover (or tap) reveals the project card; click (or the card's CTA)
+// opens the deep-dive. The hit area is the static button; only the visual
+// layer floats/parallaxes, so hover is reliable on every orb.
 
 const hoverable = () => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
 
 export function WorkCluster({ items }: { items: WorkCard[] }) {
   const router = useRouter();
-  const reduce = useReducedMotion();
   const stage = useRef<HTMLDivElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<string | null>(null);
   const [pinned, setPinned] = useState(false);
   const [themeHL, setThemeHL] = useState<Theme | null>(null);
   const [live, setLive] = useState(false);
-  const enterT = useRef<number | null>(null);
   const leaveT = useRef<number | null>(null);
 
   const bySlug = useMemo(() => Object.fromEntries(items.map((i) => [i.slug, i])), [items]);
-  const related = useMemo(() => new Set(LINKS.flatMap(([a, b]) => (a === active ? [b] : b === active ? [a] : []))), [active]);
   const current = active ? bySlug[active] : null;
 
-  // Hold compositor layers only while the section is on screen.
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
@@ -40,30 +35,29 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
     return () => io.disconnect();
   }, []);
 
+  // Parallax drives only the visual layer (CSS vars), never the hit areas.
   function onMove(e: PointerEvent<HTMLDivElement>) {
     const el = stage.current;
-    if (!el || reduce || e.pointerType === "touch") return;
+    if (!el || e.pointerType === "touch") return;
     const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.setProperty("--rx", `${(-py * 3).toFixed(2)}deg`);
-    el.style.setProperty("--ry", `${(px * 4).toFixed(2)}deg`);
+    el.style.setProperty("--px", ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+    el.style.setProperty("--py", ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
   }
-  // Hover switches immediately; a 140 ms leave grace lets the pointer travel
-  // to the panel without the reveal collapsing — WCAG 1.4.13.
-  function hoverIn(slug: string) {
+  function clearLeave() {
     if (leaveT.current) { clearTimeout(leaveT.current); leaveT.current = null; }
-    if (enterT.current) { clearTimeout(enterT.current); enterT.current = null; }
+  }
+  function hoverIn(slug: string) {
+    clearLeave();
     setActive(slug);
   }
-  function onLeave() {
-    stage.current?.style.setProperty("--rx", "0deg");
-    stage.current?.style.setProperty("--ry", "0deg");
-    if (enterT.current) { clearTimeout(enterT.current); enterT.current = null; }
+  function scheduleLeave() {
+    clearLeave();
     if (!pinned) leaveT.current = window.setTimeout(() => setActive(null), 140);
   }
-  function panelEnter() {
-    if (leaveT.current) { clearTimeout(leaveT.current); leaveT.current = null; }
+  function onStageLeave() {
+    stage.current?.style.setProperty("--px", "0");
+    stage.current?.style.setProperty("--py", "0");
+    scheduleLeave();
   }
   function release() {
     setPinned(false);
@@ -86,69 +80,75 @@ export function WorkCluster({ items }: { items: WorkCard[] }) {
 
   return (
     <div ref={wrap} className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:gap-8">
-      {/* ── Stage ─────────────────────────────────────────────────────── */}
+      {/* ── Field ─────────────────────────────────────────────────────── */}
       <div
-        className={`cluster relative h-[400px] select-none rounded-2xl border border-line bg-surface sm:h-[480px] lg:h-[560px] ${live ? "cluster-live" : ""}`}
+        ref={stage}
+        className={`cluster relative h-[400px] select-none overflow-hidden rounded-2xl border border-line bg-surface sm:h-[480px] lg:h-[560px] ${live ? "cluster-live" : ""}`}
         onPointerMove={onMove}
-        onPointerLeave={onLeave}
+        onPointerLeave={onStageLeave}
+        onPointerEnter={clearLeave}
         onClick={(e) => {
           if (e.target === e.currentTarget) release();
         }}
       >
-        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(60%_60%_at_50%_45%,var(--accent-soft),transparent_70%)] opacity-60" />
-        <div ref={stage} className="stage absolute inset-0">
-          <svg className="lines pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {LINKS.map(([a, b]) => {
-              const A = CLUSTER.find((n) => n.slug === a)!;
-              const B = CLUSTER.find((n) => n.slug === b)!;
-              const on = active === a || active === b;
-              return <line key={a + b} x1={A.x} y1={A.y} x2={B.x} y2={B.y} className={on ? "line line-on" : "line"} />;
-            })}
-          </svg>
-
-          {CLUSTER.map((n, i) => {
-            const item = bySlug[n.slug];
-            const s = 1 + n.z / 700;
-            const o = Math.min(1, Math.max(0.72, 0.72 + n.z / 600));
-            const isOn = active === n.slug;
-            const dim = (active && !isOn && !related.has(n.slug)) || (themeHL && item && !item.themes.includes(themeHL));
-            return (
-              <button
-                key={n.slug}
-                type="button"
-                className={`node ${isOn ? "node-on" : ""} ${dim ? "node-dim" : ""} node-${n.size}`}
-                style={{ left: `${n.x}%`, top: `${n.y}%`, ["--z" as string]: `${n.z}px`, ["--s" as string]: s.toFixed(3), ["--o" as string]: o.toFixed(2), ["--orb" as string]: `${ORB_PX[n.size]}px`, ["--vf" as string]: n.value.length > 7 ? "0.7" : n.value.length > 4 ? "0.82" : "1" }}
-                aria-describedby="work-panel"
-                aria-pressed={isOn}
-                aria-label={`${item?.title ?? n.slug}: ${n.value} ${n.label}`}
-                onPointerEnter={(e) => {
-                  if (e.pointerType !== "touch" && !pinned) hoverIn(n.slug);
-                }}
-                onFocus={() => setActive(n.slug)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNode(n.slug);
-                }}
-                onKeyDown={(e) => onKey(e, n.slug)}
-              >
-                <span className="node-float" style={{ animationDelay: `${-(i * 1.3)}s`, animationDuration: `${6 + (i % 3)}s` }}>
-                  <span className="node-core">
-                    <span className="orb" aria-hidden />
-                    <span className="value">{n.value}</span>
-                    <span className="label">{n.label}</span>
-                  </span>
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_55%_at_50%_48%,var(--accent-soft),transparent_72%)] opacity-60" />
+        {CLUSTER.map((n, i) => {
+          const item = bySlug[n.slug];
+          const depth = (n.z + 100) / 200; // 0 far → 1 near
+          const s = 0.82 + depth * 0.28;
+          const o = 0.62 + depth * 0.38;
+          const isOn = active === n.slug;
+          const dim = (active && !isOn) || (themeHL && item && !item.themes.includes(themeHL));
+          return (
+            <button
+              key={n.slug}
+              type="button"
+              className={`node ${isOn ? "node-on" : ""} ${dim ? "node-dim" : ""} node-${n.size}`}
+              style={{
+                left: `${n.x}%`,
+                top: `${n.y}%`,
+                ["--s" as string]: s.toFixed(3),
+                ["--o" as string]: o.toFixed(2),
+                ["--d" as string]: depth.toFixed(2),
+                ["--orb" as string]: `${ORB_PX[n.size]}px`,
+                ["--vf" as string]: n.value.length > 7 ? "0.7" : n.value.length > 4 ? "0.82" : "1",
+              }}
+              aria-describedby="work-panel"
+              aria-pressed={isOn}
+              aria-label={`${item?.title ?? n.slug}: ${n.value} ${n.label}`}
+              onPointerEnter={(e) => {
+                if (e.pointerType !== "touch" && !pinned) hoverIn(n.slug);
+              }}
+              onFocus={() => hoverIn(n.slug)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onNode(n.slug);
+              }}
+              onKeyDown={(e) => onKey(e, n.slug)}
+            >
+              <span className="node-float" style={{ animationDelay: `${-(i * 1.3)}s`, animationDuration: `${6 + (i % 3)}s` }}>
+                <span className="node-core">
+                  <span className="orb" aria-hidden />
+                  <span className="value">{n.value}</span>
+                  <span className="label">{n.label}</span>
                 </span>
-              </button>
-            );
-          })}
-        </div>
+              </span>
+            </button>
+          );
+        })}
         <div className="pointer-events-none absolute bottom-3 left-4 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">
           {pinned ? "tap again to open · tap background to release" : "hover a number · click to open"}
         </div>
       </div>
 
-      {/* ── Panel ─────────────────────────────────────────────────────── */}
-      <div id="work-panel" aria-live="polite" onPointerEnter={panelEnter} onPointerLeave={() => { if (!pinned) leaveT.current = window.setTimeout(() => setActive(null), 140); }} className="relative min-h-[420px] rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:self-start">
+      {/* ── Card ──────────────────────────────────────────────────────── */}
+      <div
+        id="work-panel"
+        aria-live="polite"
+        onPointerEnter={clearLeave}
+        onPointerLeave={scheduleLeave}
+        className="relative min-h-[420px] rounded-2xl border border-line bg-surface p-5 sm:p-6 lg:sticky lg:top-24 lg:self-start"
+      >
         {current ? (
           <div key={current.slug} className="panel-swap">
             <div className="panel-row flex items-start justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">

@@ -1,5 +1,5 @@
-// Layout of the "number constellation" on the home page. Positions are
-// percentages of the stage; z is depth in px (positive = toward the viewer).
+// Layout of the project cluster on the home page. Positions are percentages
+// of the stage; z is a depth cue (-100..100) used only for size/opacity/parallax.
 // The number is the hook; the label is two or three words.
 
 export type ClusterNode = { slug: string; x: number; y: number; z: number; size: "lg" | "md" | "sm"; value: string; label: string };
@@ -14,17 +14,5 @@ export const CLUSTER: ClusterNode[] = [
   { slug: "aditya-mcp", x: 50, y: 10, z: -70, size: "sm", value: "7", label: "read-only tools" },
 ];
 
-// Hand-picked relatedness (shared themes), kept sparse on purpose.
-export const LINKS: [string, string][] = [
-  ["delivery-fleet", "buyer-mcp"],
-  ["delivery-fleet", "whatsapp-sales-agent"],
-  ["delivery-fleet", "delhivery-ops-autopilot"],
-  ["buyer-mcp", "whatsapp-sales-agent"],
-  ["buyer-mcp", "aditya-mcp"],
-  ["delivery-fleet", "aditya-mcp"],
-  ["whatsapp-sales-agent", "order-lifecycle-automation"],
-  ["order-lifecycle-automation", "live-money-paths"],
-  ["delhivery-ops-autopilot", "live-money-paths"],
-];
 
 export const ORB_PX = { lg: 116, md: 96, sm: 84 } as const;
