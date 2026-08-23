@@ -291,6 +291,7 @@ export function FleetHero({ children }: { children: ReactNode }) {
 
   return (
     <section ref={wrapRef} className="relative overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg/85 via-bg/70 to-bg/20" />
       <div aria-hidden className="grid-paper pointer-events-none absolute inset-0" />
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 opacity-80" />
       <div className="relative">{children}</div>

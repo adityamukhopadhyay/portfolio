@@ -314,6 +314,7 @@ body, .bg-surface, .bg-surface-2, .border-line, .text-ink, .text-muted {
 @media (prefers-reduced-motion: reduce) { .panel-swap .panel-row { animation: none; } }
 
 /* ── background depth: soften the network, let surfaces sit on frosted glass ─ */
-.neural { opacity: 1; }
-@media (min-width: 1024px) { .neural { filter: blur(0.6px); } }
+/* the network lives behind glass: blurred, a step dimmer, scaled to hide blur fringes */
+.neural { opacity: 0.8; filter: blur(2px); transform: scale(1.04); will-change: transform; }
+@media (min-width: 1024px) { .neural { filter: blur(3.5px); } }
 .bg-surface { background-color: color-mix(in oklab, var(--surface) 94%, transparent); }

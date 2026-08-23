@@ -111,9 +111,9 @@ export function NeuralField() {
         const d = Math.min(a.depth, b.depth);
         const g = Math.max(a.glow, b.glow);
         const c = curveAt(s, 0.5);
-        ctx.globalAlpha = 0.07 + d * 0.07 + g * 0.22;
+        ctx.globalAlpha = 0.06 + d * 0.07 + g * 0.2;
         ctx.strokeStyle = g > 0.05 ? accent : faint;
-        ctx.lineWidth = 0.9 + d * 0.9;
+        ctx.lineWidth = 0.7 + d * 0.7;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.cx, c.cy, b.x, b.y); ctx.stroke();
       }
       // signals — small, soft
@@ -124,7 +124,7 @@ export function NeuralField() {
         ctx.globalAlpha = 0.55; ctx.strokeStyle = accent; ctx.lineWidth = 1.4;
         ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p.x, p.y); ctx.stroke();
         ctx.globalAlpha = 0.9; ctx.fillStyle = accent;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2); ctx.fill();
       }
       // neurons — faint dots; lit ones get a soft radial glow
       for (const n of neurons) {
