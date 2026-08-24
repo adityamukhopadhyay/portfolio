@@ -46,8 +46,14 @@ export function PersonalTracker() {
   }, []);
 
   useEffect(() => {
-    fetch("/personal-data.enc.json")
-      .then((r) => r.json())
+    // Read data from GitHub raw first (updates via `git push`, no Vercel deploy),
+    // falling back to the deployed copy. This keeps the dashboard live even when
+    // the Vercel free-tier daily deploy cap is hit.
+    const RAW = "https://raw.githubusercontent.com/adityamukhopadhyay/portfolio/main/public/personal-data.enc.json";
+    fetch(`${RAW}?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .catch(() => fetch(`/personal-data.enc.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.json()))
+      .then((p) => p)
       .then((p) => {
         setEnc(p);
         let stored: string | null = null;
