@@ -11,10 +11,13 @@ type Note = { t: string; note: string };
 type Job = {
   id: string; title: string; company: string; loc: string; posted: string;
   applyType: string; applyUrl?: string; url: string; score?: number;
+  mailConfirmed?: { by: string; at: string; seen: string }; rulesApplied?: string[];
   variant: string; fit: string; status: string; updated: string; notes: Note[];
 };
 type Nudge = { id: string; text: string; kind: "approval" | "hint" };
-type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[] };
+type Rule = { rule: string; status: string };
+type Mon = { lastChecked: string; source: string; cadence: string; confirmedMails: number };
+type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; rulesLedger?: Rule[]; monitoring?: Mon };
 
 const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "closed"] as const;
 
@@ -122,6 +125,31 @@ export function PersonalTracker() {
         {data.profile.mode} · notice: {data.profile.notice} · CTC when forced: {data.profile.ctcWhenForced}. Updated automatically by Claude sessions; this page always serves the last deployed state.
       </p>
 
+      {/* monitoring strip */}
+      {data.monitoring ? (
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-5 py-3 text-[12.5px] text-muted">
+          <span className="flex items-center gap-2"><span className="live-dot" /> Monitoring active</span>
+          <span>last checked {new Date(data.monitoring.lastChecked).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+          <span>{data.monitoring.confirmedMails} confirmation mails seen</span>
+          <span className="text-faint">source: {data.monitoring.source}</span>
+        </div>
+      ) : null}
+
+      {/* rules ledger */}
+      {data.rulesLedger?.length ? (
+        <details className="mt-4 rounded-xl border border-line bg-surface px-5 py-3" open>
+          <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Rules applied to every application</summary>
+          <ul className="mt-3 space-y-1.5 text-[13px] text-muted">
+            {data.rulesLedger.map((r, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                <span>{r.rule} <span className="font-mono text-[10.5px] text-faint">· {r.status}</span></span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
       {/* nudges — the human-in-the-loop queue */}
       <div className="mt-8 grid gap-3 lg:grid-cols-3">
         {data.nudges.map((n) => (
@@ -146,6 +174,7 @@ export function PersonalTracker() {
                   <span className="text-[13px] text-muted">{j.company} · {j.loc}</span>
                   <span className="ml-auto flex items-center gap-3 font-mono text-[10.5px] text-faint">
                     <span>{j.applyType}</span>
+                    {j.mailConfirmed ? <span className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-accent">✉ confirmed {j.mailConfirmed.at}</span> : null}
                     <span className="rounded-full border border-line px-2 py-0.5">{j.variant}</span>
                     <span className="text-faint transition-transform group-open:rotate-45">+</span>
                   </span>
