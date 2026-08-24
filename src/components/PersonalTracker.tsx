@@ -16,7 +16,7 @@ type Job = {
 type Nudge = { id: string; text: string; kind: "approval" | "hint" };
 type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[] };
 
-const STAGES = ["awaiting-approval", "shortlisted", "applied", "interviewing", "offer", "closed"] as const;
+const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "closed"] as const;
 
 async function decrypt(payload: { salt: string; iv: string; ct: string }, pass: string): Promise<Data> {
   const b = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -32,6 +32,15 @@ export function PersonalTracker() {
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dec, setDec] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      try { setDec(JSON.parse(localStorage.getItem("personal-decisions") ?? "{}")); } catch {}
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     fetch("/personal-data.enc.json")
@@ -56,6 +65,22 @@ export function PersonalTracker() {
       setErr("wrong passphrase");
     }
     setBusy(false);
+  }
+  function decide(id: string, v: string) {
+    setDec((prev) => {
+      const n = { ...prev };
+      if (n[id] === v) delete n[id];
+      else n[id] = v;
+      try { localStorage.setItem("personal-decisions", JSON.stringify(n)); } catch {}
+      return n;
+    });
+  }
+  async function copyDecisions() {
+    const groups: Record<string, string[]> = {};
+    for (const [id, v] of Object.entries(dec)) (groups[v] ??= []).push(id);
+    const txt = `DECISIONS ${new Date().toISOString().slice(0, 16)} — ` +
+      Object.entries(groups).map(([v, ids]) => `${v}: ${ids.join(", ")}`).join(" · ");
+    try { await navigator.clipboard.writeText(txt); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
   }
   function lock() {
     try { localStorage.removeItem("personal-key"); } catch {}
@@ -126,6 +151,18 @@ export function PersonalTracker() {
                   </span>
                 </summary>
                 <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-muted">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(["approve", "hold", "skip"] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={(e) => { e.preventDefault(); decide(j.id, v); }}
+                        className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors ${dec[j.id] === v ? "border-accent bg-accent text-accent-ink" : "border-line text-muted hover:border-rule hover:text-ink"}`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                    <span className="font-mono text-[10.5px] text-faint">decisions save on this device; copy below to send to Claude</span>
+                  </div>
                   <p><span className="text-ink">Why:</span> {j.fit}</p>
                   <p>
                     <a className="text-accent underline decoration-accent/40 underline-offset-2" href={j.url} target="_blank" rel="noreferrer">posting ↗</a>
@@ -143,6 +180,15 @@ export function PersonalTracker() {
           </div>
         </section>
       ))}
+      {Object.keys(dec).length ? (
+        <div className="fixed inset-x-0 bottom-4 z-40 mx-auto w-fit rounded-full border border-line bg-surface px-4 py-2 shadow-2xl">
+          <span className="mr-3 font-mono text-[11.5px] text-muted">{Object.keys(dec).length} decision{Object.keys(dec).length > 1 ? "s" : ""}</span>
+          <button onClick={copyDecisions} className="rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-accent-ink">
+            {copied ? "Copied ✓ — paste to Claude" : "Copy decisions for Claude"}
+          </button>
+          <button onClick={() => { setDec({}); try { localStorage.removeItem("personal-decisions"); } catch {} }} className="ml-2 font-mono text-[11px] text-faint hover:text-ink">clear</button>
+        </div>
+      ) : null}
     </div>
   );
 }
