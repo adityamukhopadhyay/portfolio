@@ -13,6 +13,7 @@ export const resume = {
   contact: {
     email: "adul.m.2003@gmail.com",
     phone: "+91-9981861975",
+    portfolio: { label: "Portfolio", href: "https://adityamukhopadhyay.vercel.app" },
     linkedin: { label: "LinkedIn", href: "https://www.linkedin.com/in/adityamukhopadhyay2003/" },
     github: { label: "GitHub", href: "https://github.com/adityamukhopadhyay/" },
   },
@@ -24,6 +25,7 @@ export const resume = {
       { head: "Class XII (PCM)", body: "SJC S.S. School, Ranjhi, Jabalpur", meta: "2021 · 93.4%" },
     ],
     links: [
+      { head: "Portfolio", body: "adityamukhopadhyay.vercel.app", href: "https://adityamukhopadhyay.vercel.app" },
       { head: "LinkedIn", body: "adityamukhopadhyay2003", href: "https://www.linkedin.com/in/adityamukhopadhyay2003/" },
       { head: "GitHub", body: "adityamukhopadhyay", href: "https://github.com/adityamukhopadhyay/" },
     ],
@@ -118,7 +120,7 @@ export const resume = {
     { label: "Fits on one page", detail: "nothing spills to a second page" },
     { label: "Reads cleanly as plain text", detail: "applicant-tracking systems get every line" },
     { label: "All key figures present", detail: "100 tools, ~20 agents, 23 test suites, INR 5.0L, $152.50, 361/361, 2,143, 85,000+, 170,000+" },
-    { label: "Links work", detail: "email · LinkedIn · GitHub" },
+    { label: "Links work", detail: "email · Portfolio · LinkedIn · GitHub" },
   ],
 };
 
@@ -129,7 +131,7 @@ const strip = (s: string) => s.replace(/\*\*/g, "");
 export function resumeAsPlainText(): string {
   const r = resume;
   const out: string[] = [];
-  out.push(`${r.name.first} ${r.name.last}`, r.subtitle, `${r.contact.email} | ${r.contact.phone} | LinkedIn | GitHub`, "");
+  out.push(`${r.name.first} ${r.name.last}`, r.subtitle, `${r.contact.email} | ${r.contact.phone} | Portfolio | LinkedIn | GitHub`, "");
   out.push("EDUCATION");
   for (const e of r.sidebar.education) out.push(e.head, e.body, e.meta);
   out.push("", "LINKS");

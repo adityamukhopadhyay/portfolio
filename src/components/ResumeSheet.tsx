@@ -31,6 +31,8 @@ function Sheet() {
           <span className="mx-2 text-faint">|</span>
           {r.contact.phone}
           <span className="mx-2 text-faint">|</span>
+          <a className="hover:text-accent" href={r.contact.portfolio.href} target="_blank" rel="noreferrer">{r.contact.portfolio.label}</a>
+          <span className="mx-2 text-faint">|</span>
           <a className="hover:text-accent" href={r.contact.linkedin.href} target="_blank" rel="noreferrer">{r.contact.linkedin.label}</a>
           <span className="mx-2 text-faint">|</span>
           <a className="hover:text-accent" href={r.contact.github.href} target="_blank" rel="noreferrer">{r.contact.github.label}</a>
