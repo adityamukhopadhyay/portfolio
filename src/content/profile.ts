@@ -35,9 +35,9 @@ export const profile = {
       body: "A 100-tool buyer-app MCP with real auth (phone-OTP OAuth → per-buyer JWT), a bearer-gated remote MCP over a courier's ops API, and a personal agent-ops MCP.",
     },
     {
-      title: "LLM cost engineering with receipts",
+      title: "Deterministic where it can be, the model where it must be",
       href: "/work/delivery-fleet",
-      body: "$67/day → $11/day (−84%) through prompt caching, context recycling, and moving ~60% of traffic off the LLM entirely — after first discovering the cost figure everyone trusted was 5–10× overstated.",
+      body: "Routine rider nudges run as deterministic templates filled from the live snapshot and re-checked at send time; the LLM is kept for judgement, escalation and real replies. The same rule/LLM split that makes the fleet reliable is what keeps it cheap to run at scale.",
     },
     {
       title: "Agents must not be able to lie",
@@ -74,7 +74,7 @@ export const profile = {
       bullets: [
         "Built a production fleet where one AI agent supervises each rider's full delivery day — 20+ concurrent Claude Agent SDK sessions over an in-process MCP toolset.",
         "Authored an MCP server exposing the buyer app as 100 tools, and shipped a live WhatsApp sales agent on top of it with deterministic honesty gates.",
-        "Cut agent cost 84% ($67 → $11/day); enforced safety structurally, backed by 23 offline test suites (~800 assertions).",
+        "Enforced safety structurally — recipient guards, invented-number blocking, watchdogs, healthchecks — backed by 23 offline test suites (~800 assertions); a rule/LLM hybrid keeps routine nudges deterministic and reserves the model for judgement, so cost tracks difficulty, not traffic.",
         "Event-driven order-lifecycle notifications (10 stages, ~500 msgs/day) hardened after a real incident; an autonomous claims-and-tickets loop against our courier partner's API.",
         "Semantic search (FAISS), sister-product clustering across 85,000+ SKUs, 170,000+ external SKUs matched via a cost-tiered LLM funnel.",
         "Live money paths: a referral platform with 361/361 bonuses credited, and QR cashback with DB-level double-credit prevention.",

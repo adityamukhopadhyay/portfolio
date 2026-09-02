@@ -49,7 +49,7 @@ export const resume = {
   },
 
   summary:
-    "AI Engineer building production multi-agent systems and LLM infrastructure: autonomous agent fleets (Claude Agent SDK), Model Context Protocol (MCP) servers, conversational AI over WhatsApp, and semantic retrieval (FAISS/RAG) — focused on agent safety, honest evaluation and LLM cost engineering.",
+    "AI Engineer building production multi-agent systems and LLM infrastructure: autonomous agent fleets (Claude Agent SDK), Model Context Protocol (MCP) servers, conversational AI over WhatsApp, and semantic retrieval (FAISS/RAG) — with deterministic guardrails, honest evaluation, and cost engineering that holds up in production.",
 
   roles: [
     {
@@ -63,7 +63,7 @@ export const resume = {
         },
         {
           kind: "leaf",
-          text: "Cut agent cost **84% ($67 → $11/day)** via prompt caching, context recycling and a rule/LLM hybrid that moved routine nudges to zero-cost templates (**−96% LLM turns**); enforced safety structurally — recipient guards, invented-number blocking, watchdogs, healthchecks — backed by **23 offline test suites (~800 assertions)**.",
+          text: "Enforced safety structurally — recipient guards, invented-number blocking, watchdogs, healthchecks — backed by **23 offline test suites (~800 assertions)**; designed a **rule/LLM hybrid** that runs routine nudges as deterministic templates re-verified at send time, reserving the model for judgement and replies, so cost tracks difficulty rather than traffic.",
         },
         { kind: "sub", text: "Conversational Commerce — WhatsApp AI Sales Agent + 100-Tool Buyer MCP" },
         {
@@ -117,7 +117,7 @@ export const resume = {
   checklist: [
     { label: "Fits on one page", detail: "nothing spills to a second page" },
     { label: "Reads cleanly as plain text", detail: "applicant-tracking systems get every line" },
-    { label: "All key figures present", detail: "84%, −96%, INR 5.0L, $152.50, 361/361, 2,143, 100 tools, 85,000+, 170,000+" },
+    { label: "All key figures present", detail: "100 tools, ~20 agents, 23 test suites, INR 5.0L, $152.50, 361/361, 2,143, 85,000+, 170,000+" },
     { label: "Links work", detail: "email · LinkedIn · GitHub" },
   ],
 };

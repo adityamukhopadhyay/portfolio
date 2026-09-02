@@ -8,7 +8,6 @@ import { Reveal } from "@/components/Reveal";
 import { Section, Chip } from "@/components/Section";
 import { MetricCard } from "@/components/MetricCard";
 import { Rich } from "@/components/Rich";
-import { CostChart } from "@/components/CostChart";
 import { ParallaxNumeral } from "@/components/ParallaxNumeral";
 
 export function generateStaticParams() {
@@ -114,15 +113,6 @@ export default async function WorkPage(props: PageProps<"/work/[slug]">) {
                   </Reveal>
                 ))}
               </ol>
-            </Section>
-          ) : null}
-
-          {/* ── Chart (fleet only) ──────────────────────────────────────── */}
-          {p.chart === "fleet-cost" ? (
-            <Section title="The cost curve" kicker="Two measures, two charts — they don't share a scale.">
-              <Reveal>
-                <CostChart />
-              </Reveal>
             </Section>
           ) : null}
 

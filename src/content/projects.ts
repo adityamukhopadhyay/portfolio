@@ -31,7 +31,6 @@ export type Project = {
   honesty?: string;
   lessons?: string[];
   links?: { label: string; href: string }[];
-  chart?: "fleet-cost";
   // Tier-2 expandable detail
   detail?: string[];
 };
@@ -49,9 +48,9 @@ export const projects: Project[] = [
     cta: "See how 20 agents run a shift unattended",
     stack: ["Python", "Claude Agent SDK", "MCP", "FastAPI", "PostgreSQL", "Supabase", "WAHA", "Freshdesk", "Railway", "React"],
     headline: [
-      { value: "−84%", label: "agent cost per day", count: { to: 84, prefix: "−", suffix: "%" } },
-      { value: "~20", label: "concurrent sessions", count: { to: 20, prefix: "~" } },
-      { value: "−96%", label: "nudge LLM turns", count: { to: 96, prefix: "−", suffix: "%" } },
+      { value: "~20", label: "concurrent agents, one per rider", count: { to: 20, prefix: "~" } },
+      { value: "13 h", label: "unattended per shift" },
+      { value: "23", label: "offline test suites", count: { to: 23 } },
     ],
     context: [
       "Badho runs a fleet of last-mile riders. Anomaly detection used to be reactive and human: someone noticed a rider was late, or a distributor called. I built a system where **one Claude Agent SDK session supervises one rider's entire day** — it pulls log deltas, decides whether each event is an anomaly, coaches the rider in Hinglish over WhatsApp, alerts the distributor, files a ticket, and escalates only when something is genuinely wrong.",
@@ -59,12 +58,8 @@ export const projects: Project[] = [
     ],
     mechanisms: [
       {
-        title: "The bill was wrong before it was high",
-        body: "The SDK's `total_cost_usd` is cumulative per session; summing it per turn had multiplied every prior spend figure by 5–10×. Reconciling against the console came first. Then the real levers: 66% of spend was cache re-priming, so a 1-hour prompt-cache TTL; context recycling bounded at 60k tokens; 25 unused built-in tools dropped. **$67/day → $26.84 → $10.72**, traced turn by turn.",
-      },
-      {
-        title: "The ~60% lever: nudges were templates all along",
-        body: "Heartbeats, chases, pickup reminders and greetings were ~60% of the bill at 2–3× the cost of a judgement turn — because every draft consulted the empath subagent. Sampling the corpus showed every one was \"{name}, {facts} — {action}?\". They became deterministic Python over the already-fetched snapshot: **nudge LLM turns 35.3/hr → 1.4/hr**, empath calls 575 → 42. Escalation evaluation, inbound replies and log-delta judgement stay with the model, pinned by tests that assert no rule branch near them.",
+        title: "Nudges were templates all along",
+        body: "Heartbeats, chases, pickup reminders and greetings were most of the model's traffic — and every one, sampled across the corpus, was the same shape: \"{name}, {facts} — {action}?\". So they became deterministic Python over the snapshot the sweep had already fetched, and the empath subagent was kept for the drafts that genuinely need judgement. Escalation evaluation, inbound replies and log-delta judgement stay with the model, pinned by tests that assert no rule branch creeps in near them. What comes out is a rule/LLM hybrid: the model runs where thinking is required, deterministic code everywhere else.",
       },
       {
         title: "Freshness guard — templates can't think, so re-check at send time",
@@ -82,17 +77,18 @@ export const projects: Project[] = [
         title: "Quality that tests cannot see",
         body: "Reading real rider threads found six defects no suite could catch: **35% of sends were content-free** (one rider got eight in a day; fleet reply rate 4%); **12.6% used `tu`/`tum`**; a deadline quoted after it had passed; verbatim repeats across restarts; a stall the counters couldn't see; silence toward a rider who had just explained himself. Each got a structural fix. The design rule that came out of it: be proactive — say what has *not* happened and for how long, and never ask a rider for an update the lifecycle already shows.",
       },
+      {
+        title: "Measure the bill before you optimise it",
+        body: "The SDK's `total_cost_usd` is cumulative per session; summing it per turn had multiplied every spend figure fleet-wide — so the first thing to fix was the measurement, not the cost, reconciled turn by turn against the provider console. Only then the real levers, all architectural: cache re-priming was most of the bill, so a 1-hour prompt-cache TTL; context recycling bounded at 60k tokens; 25 unused built-in tools dropped. Coverage kept scaling while daily spend stayed flat — the saving is a property of the design, not a one-off cut.",
+      },
     ],
     metrics: [
-      { value: "$67 → $11", label: "per day, Aug 1 → Aug 11", note: "Traced per turn from the orchestrator session: $10.72 across 580 turns and 22 riders. Auxiliary sessions were un-instrumented at the time and the console read ~$13 — so the honest figure is \"$11–13\", and −84% is against the Aug-1 baseline." },
-      { value: "35.3 → 1.4", label: "nudge LLM turns per hour", note: "Measured after rule-based nudges shipped; empath subagent calls fell 575 → 42. Rider replies to templates still cost — that is the intended win." },
       { value: "~20", label: "concurrent sessions, one per rider", note: "Auto-started for every active rider in the 08:00–21:00 IST window; 22 riders traced on Aug 11. Sundays gated off at every spawn path.", count: { to: 20, prefix: "~" } },
+      { value: "13 h", label: "unattended per shift", note: "Sessions auto-start inside the shift window, refill after deploys, and are structurally gated off on Sundays — nobody watches the fleet during the day." },
       { value: "23 / ~800", label: "offline test suites / assertions", note: "Run before every deploy. They pin the guard asymmetries, the registry rollback, the rule/LLM boundary and the figure rules — by construction, templates cannot write numbers." },
-      { value: "5–10×", label: "how far the first cost figure was off", note: "Cumulative `total_cost_usd` summed per turn. Found by reconciling traces against the billing console; every earlier figure was retracted." },
       { value: "5h 20m", label: "the outage I own", note: "25 sessions dead at start, registered as live. Same-day fix, invariant test, dependency pinned." },
     ],
-    chart: "fleet-cost",
-    honesty: "The cost figures on this page are traced, not billed. Only the orchestrator session emitted per-turn cost when they were taken; the operator chat, fleet chat and ritual sessions did not, and the console read about $13 against $10.72 traced. I report both numbers rather than the flattering one.",
+    honesty: "The efficiency here is a property of the architecture, not a headline cut: the same rule/LLM split that makes the fleet predictable is what makes it cheap to run. Where I did trace spend, I traced it per turn against the provider console rather than trusting the SDK's cumulative field — because the figures everyone first quoted turned out to be an artefact of how that field was summed.",
     lessons: ["Prompts drift; gates don't. Put every invariant below the model.", "Measure the bill before optimising it — the first number was wrong by an order of magnitude.", "Tests can't see tone. Read the threads."],
   },
 
@@ -508,7 +504,7 @@ export function readMinutes(p: Project): number {
 
 // Headline numbers for the home page strip. Each says how it was measured.
 export const heroMetrics: Metric[] = [
-  { value: "−84%", label: "agent cost per day", note: "$67 → $11, traced per turn", count: { to: 84, prefix: "−", suffix: "%" } },
+  { value: "~20", label: "Claude agents, one per rider", note: "unattended, a full 13-hour shift", count: { to: 20, prefix: "~" } },
   { value: "100", label: "MCP tools, row-scoped per buyer", note: "one OAuth login, one JWT", count: { to: 100 } },
   { value: "361 / 361", label: "referral bonuses credited", note: "zero misses, real rupees" },
   { value: "2,143", label: "courier tickets closed by an agent", note: "plus 698 claims in one day", count: { to: 2143 } },

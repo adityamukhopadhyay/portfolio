@@ -5,7 +5,7 @@
 export type ClusterNode = { slug: string; x: number; y: number; z: number; size: "lg" | "md" | "sm"; value: string; label: string };
 
 export const CLUSTER: ClusterNode[] = [
-  { slug: "delivery-fleet", x: 50, y: 44, z: 90, size: "lg", value: "−84%", label: "agent cost" },
+  { slug: "delivery-fleet", x: 50, y: 44, z: 90, size: "lg", value: "~20", label: "agents / shift" },
   { slug: "buyer-mcp", x: 21, y: 30, z: 30, size: "md", value: "100", label: "MCP tools" },
   { slug: "whatsapp-sales-agent", x: 79, y: 28, z: 10, size: "md", value: "INR 5.0L", label: "WhatsApp sales" },
   { slug: "delhivery-ops-autopilot", x: 81, y: 72, z: 40, size: "md", value: "2,143", label: "tickets closed" },
