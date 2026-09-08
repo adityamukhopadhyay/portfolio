@@ -20,6 +20,9 @@ export function Footer() {
           <a className="hover:text-ink" href={profile.links.linkedin} target="_blank" rel="noreferrer">
             LinkedIn
           </a>
+          <a className="hover:text-ink" href={profile.links.projectDocs} target="_blank" rel="noreferrer">
+            Project docs
+          </a>
         </div>
       </div>
     </footer>

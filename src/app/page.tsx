@@ -238,6 +238,7 @@ export default function Home() {
                 <a className="rounded-md border border-line px-3 py-1.5 text-ink hover:border-rule" href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
                 <Link className="rounded-md border border-line px-3 py-1.5 text-ink hover:border-rule" href="/resume">Web resume</Link>
                 <a className="rounded-md border border-line px-3 py-1.5 text-ink hover:border-rule" href={profile.resumeHref}>Resume (PDF)</a>
+                <a className="rounded-md border border-line px-3 py-1.5 text-ink hover:border-rule" href={profile.links.projectDocs} target="_blank" rel="noreferrer">Badho project docs ↗</a>
               </div>
             </div>
           </Reveal>

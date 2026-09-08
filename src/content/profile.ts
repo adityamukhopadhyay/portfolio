@@ -11,6 +11,7 @@ export const profile = {
   links: {
     linkedin: "https://www.linkedin.com/in/adityamukhopadhyay2003/",
     github: "https://github.com/adityamukhopadhyay/",
+    projectDocs: "https://drive.google.com/drive/folders/1zYhjtbmRBKxq09_61hzhWWnQZ2N1uAtj",
   },
   resumeHref: "/Aditya_Mukhopadhyay_Resume.pdf",
 
