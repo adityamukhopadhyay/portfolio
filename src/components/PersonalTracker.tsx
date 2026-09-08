@@ -25,7 +25,7 @@ type Lead = {
 type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; leads?: Lead[]; rulesLedger?: Rule[]; monitoring?: Mon };
 
 const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "needs_user", "held", "closed"] as const;
-const LEAD_ORDER = ["to_call", "call_back", "called", "emailed", "replied", "no_answer", "closed"];
+const LEAD_ORDER = ["to_call", "call_back", "to_email", "called", "emailed", "replied", "no_answer", "name_only", "closed"];
 const telHref = (p: string) => "tel:" + p.replace(/[^+\d]/g, "");
 
 async function decrypt(payload: { salt: string; iv: string; ct: string }, pass: string): Promise<Data> {
