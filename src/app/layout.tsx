@@ -43,11 +43,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Runs before paint so the page never flashes the wrong theme.
+// Runs before paint so the page never flashes the wrong theme. Dark is the default; a stored choice wins.
 const themeScript = `
-(function(){try{var s=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)');
-var t=s==='light'||s==='dark'?s:(m.matches?'dark':'light');document.documentElement.dataset.theme=t;
-if(!s){m.addEventListener('change',function(e){document.documentElement.dataset.theme=e.matches?'dark':'light'})}}catch(e){}})();
+(function(){try{var s=localStorage.getItem('theme');
+var t=s==='light'||s==='dark'?s:'dark';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='dark'}})();
 `;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

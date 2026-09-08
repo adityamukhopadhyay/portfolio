@@ -5,19 +5,20 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  --bg: #fbfbfa;
-  --surface: #ffffff;
-  --surface-2: #f3f3f0;
-  --ink: #1a1a1a;
-  --muted: #6b6b6b;
-  --faint: #9a9a9a;
-  --line: #e6e6e2;
-  --rule: #b0b0b0;
-  --accent: #0d9470;
+  /* Light mode: warm beige paper, not bright white. */
+  --bg: #f3eee4;
+  --surface: #faf6ee;
+  --surface-2: #ece5d7;
+  --ink: #1f1c18;
+  --muted: #6b665e;
+  --faint: #9a948a;
+  --line: #e1d9c9;
+  --rule: #b3a993;
+  --accent: #0d8f6c;
   --accent-ink: #ffffff;
-  --accent-soft: #dff3ea;
+  --accent-soft: #dcefe3;
   --warn: #b8741a;
-  --warn-soft: #f8ecd6;
+  --warn-soft: #f5e6cd;
   color-scheme: light;
 }
 

@@ -27,12 +27,6 @@ export function Nav() {
               {l.label}
             </a>
           ))}
-          <Link
-            href="/resume"
-            className="ml-1 rounded-md border border-line px-3 py-1.5 text-muted transition-colors hover:border-rule hover:text-ink"
-          >
-            Resume
-          </Link>
           <a
             href={profile.links.projectDocs}
             target="_blank"
