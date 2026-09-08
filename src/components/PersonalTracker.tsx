@@ -17,9 +17,16 @@ type Job = {
 type Nudge = { id: string; text: string; kind: "approval" | "hint" };
 type Rule = { rule: string; status: string };
 type Mon = { lastChecked: string; source: string; cadence: string; confirmedMails: number };
-type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; rulesLedger?: Rule[]; monitoring?: Mon };
+type Lead = {
+  id: string; name: string; title?: string; company: string; phone?: string; email?: string; linkedin?: string;
+  roleFor?: string; jobUrl?: string; source?: string; confidence?: string; priority?: string; status?: string;
+  location?: string; updated?: string; notes?: (Note | string)[];
+};
+type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; leads?: Lead[]; rulesLedger?: Rule[]; monitoring?: Mon };
 
-const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "closed"] as const;
+const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "needs_user", "held", "closed"] as const;
+const LEAD_ORDER = ["to_call", "call_back", "called", "emailed", "replied", "no_answer", "closed"];
+const telHref = (p: string) => "tel:" + p.replace(/[^+\d]/g, "");
 
 async function decrypt(payload: { salt: string; iv: string; ct: string }, pass: string): Promise<Data> {
   const b = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -165,6 +172,49 @@ export function PersonalTracker() {
           </div>
         ))}
       </div>
+
+      {/* leads — people to call */}
+      {data.leads?.length ? (
+        <section className="mt-10">
+          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+            leads to call <span className="text-faint">· {data.leads.length} · phone first, then email</span>
+          </h2>
+          <div className="divide-y divide-line rounded-xl border border-line bg-surface">
+            {[...data.leads]
+              .sort((a, b) => LEAD_ORDER.indexOf(a.status ?? "to_call") - LEAD_ORDER.indexOf(b.status ?? "to_call") || (a.phone ? 0 : 1) - (b.phone ? 0 : 1))
+              .map((l) => (
+                <details key={l.id} className="group px-5 py-3.5">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 [&::-webkit-details-marker]:hidden">
+                    <span className="text-[15px] font-semibold text-ink">{l.name}</span>
+                    <span className="text-[13px] text-muted">{l.title ? `${l.title} · ` : ""}{l.company}</span>
+                    {l.phone ? <a onClick={(e) => e.stopPropagation()} className="font-mono text-[13px] text-accent underline decoration-accent/40 underline-offset-2" href={telHref(l.phone)}>{l.phone}</a> : null}
+                    {l.email ? <a onClick={(e) => e.stopPropagation()} className="font-mono text-[12.5px] text-accent underline decoration-accent/40 underline-offset-2" href={`mailto:${l.email}`}>{l.email}</a> : null}
+                    <span className="ml-auto flex items-center gap-3 font-mono text-[10.5px] text-faint">
+                      <span className="rounded-full border border-line px-2 py-0.5">{l.status ?? "to_call"}</span>
+                      {l.confidence ? <span>{l.confidence}</span> : null}
+                      <span className="text-faint transition-transform group-open:rotate-45">+</span>
+                    </span>
+                  </summary>
+                  <div className="mt-2 space-y-1.5 text-[13px] leading-relaxed text-muted">
+                    {l.roleFor ? <p><span className="text-ink">Role:</span> {l.roleFor}{l.location ? ` · ${l.location}` : ""}</p> : null}
+                    <p>
+                      {l.jobUrl ? <a className="text-accent underline decoration-accent/40 underline-offset-2" href={l.jobUrl} target="_blank" rel="noreferrer">job posting ↗</a> : null}
+                      {l.linkedin ? <> {l.jobUrl ? "· " : ""}<a className="text-accent underline decoration-accent/40 underline-offset-2" href={l.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a></> : null}
+                      {l.source ? <span className="text-faint"> · source: {l.source}</span> : null}
+                    </p>
+                    {l.notes?.length ? (
+                      <ul className="space-y-1 border-l border-line pl-3">
+                        {l.notes.map((n, i) => (
+                          <li key={i}>{typeof n === "string" ? n : <><span className="font-mono text-[10.5px] text-faint">{new Date(n.t).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span> — {n.note}</>}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                </details>
+              ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* board */}
       {STAGES.filter((s) => byStage(s).length).map((s) => (
