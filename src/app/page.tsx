@@ -127,6 +127,12 @@ export default function Home() {
         {/* ── Selected work ────────────────────────────────────────────── */}
         <Section id="work" title="Selected work" kicker="Seven production systems. Scroll through them — each one takes its turn on the right; click any to read how it was built, guards, numbers and all.">
           <Reveal>
+            <p className="mb-6 text-sm text-muted">
+              Full write-ups of every Badho system live in one shared folder (badho-works):{" "}
+              <a className="inline-flex items-center gap-1 rounded-md border border-accent/50 bg-accent-soft/40 px-3 py-1.5 text-ink hover:border-accent" href={profile.links.projectDocs} target="_blank" rel="noreferrer">
+                Project docs ↗
+              </a>
+            </p>
             <WorkSwitch items={cards} />
           </Reveal>
         </Section>

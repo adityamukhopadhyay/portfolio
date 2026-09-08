@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { profile } from "@/content/profile";
 import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
@@ -32,6 +33,14 @@ export function Nav() {
           >
             Resume
           </Link>
+          <a
+            href={profile.links.projectDocs}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-1 rounded-md border border-accent/50 bg-accent-soft/40 px-3 py-1.5 text-ink transition-colors hover:border-accent"
+          >
+            Project docs ↗
+          </a>
           <span className="ml-2">
             <ThemeToggle />
           </span>
