@@ -31,5 +31,8 @@ vercel whoami --token "$(cat '…/Investments/data/vercel-token')" --scope adity
 
 ## Updating the resume
 
-Regenerate the PDF with `../build_resume.py`, promote it to `../Aditya_Mukhopadhyay_Resume_canon.pdf`,
-copy it to `public/Aditya_Mukhopadhyay_Resume.pdf`, and mirror any copy change in `src/content/resume.ts`.
+Regenerate the PDF with `../applications/build_resume_v2.py ai_engineer` (every project is one
+problem → solution → impact point), promote `../applications/out/Aditya_Mukhopadhyay_Resume_ai_engineer.pdf`
+to `../Aditya_Mukhopadhyay_Resume_canon.pdf`, copy it to `public/Aditya_Mukhopadhyay_Resume.pdf`, and
+mirror the copy in `src/content/resume.ts` (generated from the builder's strings on 2026-09-09 — keep them
+identical) and the six Badho bullets in `src/content/profile.ts`.

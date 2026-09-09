@@ -73,12 +73,12 @@ export const profile = {
       org: "Badho Technologies Pvt. Ltd.",
       period: "Jun 2025 – Present",
       bullets: [
-        "Built a production fleet where one AI agent supervises each rider's full delivery day — 20+ concurrent Claude Agent SDK sessions over an in-process MCP toolset.",
-        "Authored an MCP server exposing the buyer app as 100 tools, and shipped a live WhatsApp sales agent on top of it with deterministic honesty gates.",
-        "Enforced safety structurally — recipient guards, invented-number blocking, watchdogs, healthchecks — backed by 23 offline test suites (~800 assertions); a rule/LLM hybrid keeps routine nudges deterministic and reserves the model for judgement, so cost tracks difficulty, not traffic.",
-        "Event-driven order-lifecycle notifications (10 stages, ~500 msgs/day) hardened after a real incident; an autonomous claims-and-tickets loop against our courier partner's API.",
-        "Semantic search (FAISS), sister-product clustering across 85,000+ SKUs, 170,000+ external SKUs matched via a cost-tiered LLM funnel.",
-        "Live money paths: a referral platform with 361/361 bonuses credited, and QR cashback with DB-level double-credit prevention.",
+        "Built a delivery fleet where a root orchestrator agent runs each rider's day (~20 concurrent) and delegates to sub-agents — empath, driver-profile analyst, escalation governor, judgement tiebreaker, Google Maps route planner — over one in-process MCP server with WhatsApp, push, Freshdesk tickets and vision on rider photos.",
+        "Authored an MCP server exposing the buyer app as 100 typed tools behind phone-OTP OAuth and per-buyer JWTs, and shipped a live WhatsApp sales agent on it that searches the catalogue, builds carts, applies coupons, sends deeplinks and raises tickets — with deterministic honesty gates.",
+        "Guards below the model — recipient guard, invented-number blocking, watchdog, healthcheck — pinned by 23 offline test suites; routine nudges run as deterministic templates so the model is used only for judgement.",
+        "An autopilot over the courier partner's API that auto-files weight claims with vision over sorter images and raises NDR/lost/damaged tickets — 698 claims and 370 tickets filed in 24 hours, 2,143 closed to date.",
+        "Sub-100 ms hybrid search (FAISS + PostgreSQL metaphone), sister-product clustering across 85,000+ SKUs, and 170,000+ external SKUs matched through an n8n funnel ending in an LLM decision.",
+        "Event-driven order-lifecycle notifications (10 stages, ~500 messages a day) and live money paths — a referral engine (407 buyers referred, INR 48.1K paid out, 155 orders across both cohorts) and QR cashback with DB-level double-credit prevention.",
       ],
     },
     {
