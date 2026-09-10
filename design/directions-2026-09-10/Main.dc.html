@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+  <style>
+    body { margin: 0; background: #121212; color: #ededea; font-family: "Nunito Sans", "Avenir Next", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #34a884; text-decoration: none; } a:hover { color: #5cc2a1; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+    .serif { font-family: "Instrument Serif", Georgia, serif; font-style: italic; }
+    .grid-paper { background-image: linear-gradient(to right, rgba(43,43,42,0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(43,43,42,0.7) 1px, transparent 1px); background-size: 32px 32px; mask-image: radial-gradient(ellipse 70% 70% at 60% 45%, black 20%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 70% 70% at 60% 45%, black 20%, transparent 75%); }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-18px); } }
+    .plane-bg { animation: drift 6s ease-in-out infinite alternate; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 1560px; background: #121212; position: relative; overflow: hidden;">
+
+  <!-- nav -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 72px; height: 64px; border-bottom: 1px solid #2b2b2a;">
+    <span class="serif" style="font-size: 26px; color: #ededea;">Who Am I?</span>
+    <div style="display: flex; align-items: center; gap: 28px; font-size: 14px; color: #a6a6a2;">
+      <span>Work</span><span>Experience</span><span>Contact</span>
+      <span style="border: 1px solid #4b4b49; border-radius: 6px; padding: 7px 12px; color: #ededea;">Project docs ↗</span>
+    </div>
+  </div>
+
+  <!-- ══ HERO: three depth planes ═══════════════════════════════════════ -->
+  <div style="position: relative; height: 780px;">
+    <div class="grid-paper" style="position: absolute; inset: 0;"></div>
+
+    <!-- background plane (moves 0.2x on scroll) -->
+    <div class="plane-bg" style="position: absolute; left: 40px; bottom: 26px; font-size: 300px; line-height: 0.85; letter-spacing: -0.03em; color: #1c1c1b; font-weight: 800; white-space: nowrap; user-select: none;">Mukhopadhyay</div>
+
+    <!-- midground plane: fleet orbit + photo (0.6x) -->
+    <div style="position: absolute; right: 120px; top: 92px; width: 520px; height: 560px;">
+      <svg width="520" height="560" viewBox="0 0 520 560" fill="none" style="position: absolute; inset: 0;">
+        <ellipse cx="260" cy="290" rx="248" ry="238" stroke="#2b2b2a" stroke-width="1"></ellipse>
+        <ellipse cx="260" cy="290" rx="190" ry="182" stroke="#2b2b2a" stroke-width="1" stroke-dasharray="3 6"></ellipse>
+        <g fill="#34a884">
+          <circle cx="260" cy="52" r="3"></circle><circle cx="337" cy="64" r="3"></circle><circle cx="405" cy="100" r="3"></circle><circle cx="458" cy="160" r="3"></circle>
+          <circle cx="492" cy="234" r="3"></circle><circle cx="500" cy="316" r="3"></circle><circle cx="478" cy="396" r="3"></circle><circle cx="430" cy="462" r="3"></circle>
+          <circle cx="362" cy="508" r="3"></circle><circle cx="282" cy="528" r="3"></circle><circle cx="200" cy="520" r="3"></circle><circle cx="126" cy="490" r="3"></circle>
+          <circle cx="68" cy="436" r="3"></circle><circle cx="30" cy="364" r="3"></circle><circle cx="18" cy="284" r="3"></circle><circle cx="36" cy="204" r="3"></circle>
+          <circle cx="78" cy="136" r="3"></circle><circle cx="140" cy="84" r="3"></circle><circle cx="205" cy="58" r="3"></circle><circle cx="297" cy="50" r="3"></circle>
+        </g>
+        <g stroke="#34a884" stroke-opacity="0.35" stroke-width="1">
+          <line x1="260" y1="290" x2="405" y2="100"></line><line x1="260" y1="290" x2="68" y2="436"></line><line x1="260" y1="290" x2="500" y2="316"></line><line x1="260" y1="290" x2="140" y2="84"></line>
+        </g>
+      </svg>
+      <div style="position: absolute; left: 112px; top: 92px; width: 296px; height: 396px; transform: rotate(-3deg); border-radius: 32px; background: #17302a;"></div>
+      <div style="position: absolute; left: 112px; top: 92px; width: 296px; height: 396px; transform: rotate(3deg); border-radius: 32px; border: 1px solid #2b2b2a;"></div>
+      <img src="headshot.jpg" alt="Aditya Mukhopadhyay" style="position: absolute; left: 112px; top: 92px; width: 296px; height: 396px; object-fit: cover; object-position: top; border-radius: 28px; border: 1px solid #2b2b2a; box-shadow: 0 40px 80px -30px rgba(0,0,0,0.8);">
+    </div>
+
+    <!-- foreground plane: copy (1x) -->
+    <div style="position: absolute; left: 72px; top: 118px; width: 700px; display: flex; flex-direction: column; gap: 0;">
+      <div class="rise mono" style="display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #a6a6a2; animation-delay: 0ms;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #34a884; box-shadow: 0 0 0 6px rgba(52,168,132,0.18);"></span>
+        AI Engineer · Badho Technologies
+      </div>
+      <div style="margin-top: 26px; font-size: 88px; line-height: 0.92; letter-spacing: -0.025em;">
+        <div class="rise" style="font-weight: 300; color: #a6a6a2; animation-delay: 90ms;">Aditya</div>
+        <div class="rise" style="font-weight: 800; color: #ededea; animation-delay: 180ms;">Mukhopadhyay</div>
+      </div>
+      <p class="rise" style="margin: 30px 0 0; max-width: 560px; font-size: 19px; line-height: 1.55; color: #a6a6a2; animation-delay: 300ms;">I build production multi-agent systems and the MCP infrastructure they run on — with a working obsession for agent safety, honest evaluation and LLM cost engineering.</p>
+      <div class="rise" style="margin-top: 34px; display: flex; gap: 12px; animation-delay: 400ms;">
+        <span style="background: #34a884; color: #0b1a15; font-weight: 600; font-size: 14px; border-radius: 6px; padding: 10px 16px; box-shadow: 0 14px 34px -12px #34a884;">See the work</span>
+        <span style="border: 1px solid #2b2b2a; color: #ededea; font-size: 14px; border-radius: 6px; padding: 10px 16px;">Resume</span>
+        <span style="border: 1px solid #2b2b2a; color: #ededea; font-size: 14px; border-radius: 6px; padding: 10px 16px;">GitHub</span>
+        <span style="border: 1px solid #2b2b2a; color: #ededea; font-size: 14px; border-radius: 6px; padding: 10px 16px;">LinkedIn</span>
+      </div>
+    </div>
+
+    <!-- plane legend (design note, stays in the mock only) -->
+    <div class="mono" style="position: absolute; left: 72px; bottom: 28px; display: flex; gap: 18px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #72726e;">
+      <span>BG · name · 0.2×</span><span>MID · fleet + photo · 0.6×</span><span>FG · copy · 1×</span>
+    </div>
+
+    <!-- trace strip -->
+    <div class="mono" style="position: absolute; right: 72px; bottom: 28px; width: 420px; border: 1px solid #2b2b2a; background: rgba(26,26,26,0.85); border-radius: 10px; padding: 12px 14px; font-size: 11px; line-height: 1.7; color: #a6a6a2;">
+      <div style="display: flex; justify-content: space-between; color: #72726e; letter-spacing: 0.16em; text-transform: uppercase; font-size: 10px;"><span>● Fleet trace stream</span><span>simulated</span></div>
+      <div><span style="color: #72726e;">08:00:12</span> <span style="color: #34a884;">session.start</span> rider-01</div>
+      <div><span style="color: #72726e;">08:14:40</span> <span style="color: #34a884;">log.delta</span> rider-07 $0.018</div>
+      <div><span style="color: #72726e;">08:15:31</span> <span style="color: #cf9540;">whatsapp.recipient_blocked</span> rider-04 guard</div>
+    </div>
+  </div>
+
+  <!-- ══ WORK: film strip, one card in focus ════════════════════════════ -->
+  <div style="padding: 56px 0 0 72px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding-right: 72px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span class="mono" style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #72726e;">Selected work · 07 systems</span>
+        <span class="serif" style="font-size: 44px; line-height: 1; color: #ededea;">Seven things that ran in production.</span>
+      </div>
+      <span class="mono" style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #72726e;">scroll → each card takes its turn</span>
+    </div>
+
+    <div style="margin-top: 40px; display: flex; gap: 24px; align-items: flex-start;">
+
+      <!-- focused card -->
+      <div style="width: 600px; flex: none; border-radius: 20px; border: 1px solid #4b4b49; background: #1a1a1a; padding: 32px; display: flex; flex-direction: column; gap: 22px; box-shadow: 0 50px 100px -50px rgba(0,0,0,0.9);">
+        <div class="mono" style="display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #72726e;"><span>agents · guards</span><span>01 / 07</span></div>
+        <div style="height: 1px; background: #2b2b2a;"><div style="height: 1px; width: 14%; background: #34a884;"></div></div>
+        <div style="font-size: 30px; font-weight: 600; line-height: 1.15; color: #ededea;">Autonomous Delivery Fleet</div>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #a6a6a2;">One Claude agent per rider, per day, supervising real deliveries over WhatsApp — about twenty at once, unattended for a 13-hour shift.</p>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+          <div style="border: 1px solid #2b2b2a; border-radius: 10px; padding: 12px 14px;"><div class="mono" style="font-size: 26px; font-weight: 500; color: #ededea;">~20</div><div style="margin-top: 6px; font-size: 12px; color: #a6a6a2;">concurrent agents</div></div>
+          <div style="border: 1px solid #2b2b2a; border-radius: 10px; padding: 12px 14px;"><div class="mono" style="font-size: 26px; font-weight: 500; color: #ededea;">13 h</div><div style="margin-top: 6px; font-size: 12px; color: #a6a6a2;">unattended per shift</div></div>
+          <div style="border: 1px solid #2b2b2a; border-radius: 10px; padding: 12px 14px;"><div class="mono" style="font-size: 26px; font-weight: 500; color: #ededea;">23</div><div style="margin-top: 6px; font-size: 12px; color: #a6a6a2;">offline test suites</div></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="mono" style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #72726e;">Claude Agent SDK · MCP · WhatsApp · Postgres</span>
+          <span style="display: inline-flex; align-items: center; gap: 8px; background: #34a884; color: #0b1a15; font-weight: 600; font-size: 13px; border-radius: 999px; padding: 9px 14px;">Read how it was built <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b1a15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></span>
+        </div>
+      </div>
+
+      <!-- next cards, stepped back -->
+      <div style="width: 380px; flex: none; margin-top: 36px; border-radius: 20px; border: 1px solid #2b2b2a; background: #1a1a1a; padding: 26px; display: flex; flex-direction: column; gap: 14px; opacity: 0.75;">
+        <div class="mono" style="font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #72726e;">02 / 07</div>
+        <div style="font-size: 22px; font-weight: 600; line-height: 1.2; color: #ededea;">Buyer MCP — the app as 100 agent tools</div>
+        <div class="mono" style="font-size: 30px; font-weight: 500; color: #ededea;">100 <span style="font-family: 'Nunito Sans', sans-serif; font-size: 12px; font-weight: 400; color: #a6a6a2;">typed tools, row-scoped</span></div>
+      </div>
+      <div style="width: 380px; flex: none; margin-top: 72px; border-radius: 20px; border: 1px solid #2b2b2a; background: #1a1a1a; padding: 26px; display: flex; flex-direction: column; gap: 14px; opacity: 0.45;">
+        <div class="mono" style="font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #72726e;">03 / 07</div>
+        <div style="font-size: 22px; font-weight: 600; line-height: 1.2; color: #ededea;">WhatsApp AI Sales Agent</div>
+        <div class="mono" style="font-size: 30px; font-weight: 500; color: #ededea;">$152.50 <span style="font-family: 'Nunito Sans', sans-serif; font-size: 12px; font-weight: 400; color: #a6a6a2;">total LLM spend</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 32px; display: flex; gap: 8px; align-items: center;">
+      <span style="width: 28px; height: 4px; border-radius: 999px; background: #34a884;"></span>
+      <span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span><span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span><span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span><span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span><span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span><span style="width: 8px; height: 4px; border-radius: 999px; background: #2b2b2a;"></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

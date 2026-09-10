@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "A · Depth stage", "x": 0, "y": 0, "w": 1440, "h": 1560 },
+    { "file": "DirectionB.dc.html", "title": "B · Editorial ledger", "x": 1560, "y": 0, "w": 1440, "h": 1560 },
+    { "file": "DirectionC.dc.html", "title": "C · Data cockpit", "x": 3120, "y": 0, "w": 1440, "h": 1560 }
+  ],
+  "annotations": [
+    { "id": "brief", "x": 0, "y": -220, "w": 1440, "text": "Three directions for the home page: hero + Selected work. Same palette, fonts, copy and figures as the live site; what changes is composition and motion. Pick one and I build it into the Next.js site.\nEach note below says how it moves on scroll, and what it costs." },
+    { "id": "note-a", "x": 0, "y": 1640, "w": 1440, "text": "A · DEPTH STAGE — the photo-led, cinematic one.\nMotion: three planes on scroll. The huge name in the background drifts at 0.2x, the fleet orbit and photo at 0.6x, the copy at 1x; the orbit dots pulse as events fire. Work is a horizontal strip: the focused card is full-size, the next ones step back and dim; scroll (or drag) advances one card at a time and the dots track position.\nWhy: closest to the Astra demos, the most 'wow' on first load.\nCost: the horizontal strip fights the vertical read on phones (it collapses to a stack there), and the big background name needs care at narrow widths." },
+    { "id": "note-b", "x": 1560, "y": 1640, "w": 1440, "text": "B · EDITORIAL LEDGER — the typography-led one.\nMotion: the two-line headline settles in word by word; the ledger rows reveal one at a time as they cross mid-screen, the active row's number turns green and its accent line draws across; the big figures count up once, then stay.\nWhy: reads like a magazine feature, calm and confident, and it is the most honest to the 'every number says how it was measured' voice. Cheapest to build and the best on phones.\nCost: the least visual spectacle; the photo is small; someone skimming for a demo feel may find it plain." },
+    { "id": "note-c", "x": 3120, "y": 1640, "w": 1440, "text": "C · DATA COCKPIT — the dense, terminal one.\nMotion: the cockpit panel boots on load (a scan line, tiles filling in, the trace ticking) and stays sticky while the tiles below rise in one by one; hovering a tile lifts it and lights its figure. This is the current site's terminal flavour pushed further.\nWhy: says 'production systems' at a glance; every headline figure is above the fold.\nCost: the busiest of the three; risk of reading as a dashboard rather than a person. Bento tiles need real content in every cell or they look empty." }
+  ],
+  "launch": { "view": "canvas" }
+}

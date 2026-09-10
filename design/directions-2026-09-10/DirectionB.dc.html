@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+  <style>
+    body { margin: 0; background: #121212; color: #ededea; font-family: "Nunito Sans", "Avenir Next", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #34a884; text-decoration: none; } a:hover { color: #5cc2a1; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+    .serif { font-family: "Instrument Serif", Georgia, serif; font-style: italic; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; min-height: 1560px; background: #121212; position: relative; overflow: hidden;">
+
+  <!-- nav -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 72px; height: 64px; border-bottom: 1px solid #2b2b2a;">
+    <span class="serif" style="font-size: 26px; color: #ededea;">Who Am I?</span>
+    <div style="display: flex; align-items: center; gap: 28px; font-size: 14px; color: #a6a6a2;">
+      <span>Work</span><span>Experience</span><span>Contact</span>
+      <span style="border: 1px solid #4b4b49; border-radius: 6px; padding: 7px 12px; color: #ededea;">Project docs ↗</span>
+    </div>
+  </div>
+
+  <!-- ══ HERO: the sentence is the hero ═════════════════════════════════ -->
+  <div style="padding: 96px 72px 0; display: flex; flex-direction: column; gap: 0;">
+    <div class="rise mono" style="display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #a6a6a2;">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #34a884;"></span>
+      Aditya Mukhopadhyay · AI Engineer · Badho Technologies
+    </div>
+
+    <div style="margin-top: 36px; max-width: 1180px; font-size: 104px; line-height: 0.98; letter-spacing: -0.03em;">
+      <div class="rise serif" style="color: #a6a6a2; font-weight: 400; animation-delay: 90ms;">Agents that have to be right,</div>
+      <div class="rise" style="color: #ededea; font-weight: 800; animation-delay: 180ms;">not just impressive.</div>
+    </div>
+
+    <div style="margin-top: 56px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; align-items: start; border-top: 1px solid #2b2b2a; padding-top: 40px;">
+      <div class="rise" style="animation-delay: 300ms; display: flex; flex-direction: column; gap: 18px;">
+        <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #a6a6a2;">I build production multi-agent systems and the MCP infrastructure they run on — with a working obsession for agent safety, honest evaluation and LLM cost engineering.</p>
+        <div style="display: flex; gap: 22px; font-size: 14px;">
+          <span style="color: #34a884; border-bottom: 1px solid rgba(52,168,132,0.5); padding-bottom: 2px;">See the work ↓</span>
+          <span style="color: #ededea; border-bottom: 1px solid #4b4b49; padding-bottom: 2px;">Resume</span>
+          <span style="color: #ededea; border-bottom: 1px solid #4b4b49; padding-bottom: 2px;">GitHub</span>
+          <span style="color: #ededea; border-bottom: 1px solid #4b4b49; padding-bottom: 2px;">LinkedIn</span>
+        </div>
+      </div>
+
+      <div class="rise" style="animation-delay: 380ms; display: flex; gap: 18px; align-items: center;">
+        <img src="headshot.jpg" alt="Aditya Mukhopadhyay" style="width: 132px; height: 132px; border-radius: 999px; object-fit: cover; object-position: top; border: 1px solid #2b2b2a; flex: none;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 16px; font-weight: 600; color: #ededea;">Fifteen months in production.</span>
+          <span style="font-size: 14px; line-height: 1.5; color: #a6a6a2;">Every number here was measured, and each one says how. Where a figure is flattering but not causal, I say so.</span>
+        </div>
+      </div>
+
+      <div class="rise mono" style="animation-delay: 460ms; font-size: 11px; line-height: 1.9; color: #a6a6a2; border-left: 1px solid #2b2b2a; padding-left: 20px;">
+        <div style="color: #72726e; letter-spacing: 0.16em; text-transform: uppercase; font-size: 10px; margin-bottom: 6px;">● fleet trace · simulated</div>
+        <div><span style="color: #72726e;">08:00:12</span> <span style="color: #34a884;">session.start</span> rider-01</div>
+        <div><span style="color: #72726e;">08:00:13</span> <span style="color: #34a884;">session.start</span> rider-02</div>
+        <div><span style="color: #72726e;">08:14:40</span> <span style="color: #34a884;">log.delta</span> rider-07 $0.018</div>
+        <div><span style="color: #72726e;">08:15:02</span> nudge.rule_based rider-11 $0.000</div>
+        <div><span style="color: #72726e;">08:15:31</span> <span style="color: #cf9540;">whatsapp.recipient_blocked</span> guard</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WORK: the ledger ═══════════════════════════════════════════════ -->
+  <div style="margin-top: 120px; padding: 0 72px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #4b4b49; padding-bottom: 18px;">
+      <span class="mono" style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #72726e;">Selected work</span>
+      <span class="mono" style="font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #72726e;">07 · rows reveal as you scroll · figures count up</span>
+    </div>
+
+    <!-- row 01 (active) -->
+    <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; gap: 32px; align-items: end; padding: 44px 0 36px; border-bottom: 1px solid #2b2b2a; position: relative;">
+      <div class="mono" style="font-size: 132px; line-height: 0.8; font-weight: 500; letter-spacing: -0.04em; color: #34a884;">01</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 40px; font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; color: #ededea;">Autonomous Delivery Fleet</div>
+        <div style="font-size: 16px; line-height: 1.55; color: #a6a6a2; max-width: 640px;">One Claude agent per rider, per day, supervising real deliveries over WhatsApp — about twenty at once, unattended for a 13-hour shift.</div>
+        <div class="mono" style="font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #72726e;">Claude Agent SDK · MCP · WhatsApp · Postgres</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right;">
+        <div class="mono" style="font-size: 56px; line-height: 0.9; font-weight: 500; letter-spacing: -0.02em; color: #ededea;">~20</div>
+        <div style="font-size: 13px; color: #a6a6a2;">concurrent agents, one per rider</div>
+        <div style="margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #34a884;">Read how it was built <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34a884" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></div>
+      </div>
+      <div style="position: absolute; left: 0; bottom: -1px; height: 1px; width: 38%; background: #34a884;"></div>
+    </div>
+
+    <!-- row 02 -->
+    <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; gap: 32px; align-items: end; padding: 40px 0 32px; border-bottom: 1px solid #2b2b2a;">
+      <div class="mono" style="font-size: 132px; line-height: 0.8; font-weight: 500; letter-spacing: -0.04em; color: #2b2b2a;">02</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 34px; font-weight: 600; line-height: 1.05; color: #ededea;">Buyer MCP — the app as 100 agent tools</div>
+        <div style="font-size: 15px; line-height: 1.55; color: #a6a6a2; max-width: 640px;">The whole buyer marketplace as typed tools, with real OAuth and exact app parity — consumed by production agents, Claude Desktop and Claude Code.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right;">
+        <div class="mono" style="font-size: 48px; line-height: 0.9; font-weight: 500; color: #ededea;">100</div>
+        <div style="font-size: 13px; color: #a6a6a2;">typed tools, row-scoped per buyer</div>
+      </div>
+    </div>
+
+    <!-- row 03 -->
+    <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; gap: 32px; align-items: end; padding: 40px 0 32px; border-bottom: 1px solid #2b2b2a;">
+      <div class="mono" style="font-size: 132px; line-height: 0.8; font-weight: 500; letter-spacing: -0.04em; color: #2b2b2a;">03</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 34px; font-weight: 600; line-height: 1.05; color: #ededea;">WhatsApp AI Sales Agent</div>
+        <div style="font-size: 15px; line-height: 1.55; color: #a6a6a2; max-width: 640px;">A live, tool-using sales agent for retailers that is architecturally unable to claim an order it didn't place.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right;">
+        <div class="mono" style="font-size: 48px; line-height: 0.9; font-weight: 500; color: #ededea;">$152.50</div>
+        <div style="font-size: 13px; color: #a6a6a2;">total LLM spend, whole programme</div>
+      </div>
+    </div>
+
+    <!-- row 04, cut by the fold -->
+    <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; gap: 32px; align-items: end; padding: 40px 0 0; opacity: 0.4;">
+      <div class="mono" style="font-size: 132px; line-height: 0.8; font-weight: 500; letter-spacing: -0.04em; color: #2b2b2a;">04</div>
+      <div style="font-size: 34px; font-weight: 600; line-height: 1.05; color: #ededea;">Order-Lifecycle WhatsApp Automation</div>
+      <div class="mono" style="font-size: 48px; line-height: 0.9; font-weight: 500; color: #ededea; text-align: right;">0</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
