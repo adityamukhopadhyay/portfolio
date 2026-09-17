@@ -17,5 +17,8 @@ const keyMaterial = await crypto.subtle.importKey("raw", new TextEncoder().encod
 const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 200000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
 const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plain));
 const b64 = (u) => Buffer.from(u).toString("base64");
-writeFileSync(join(here, "..", "public", "personal-data.enc.json"), JSON.stringify({ v: 1, kdf: "PBKDF2-SHA256-200k", salt: b64(salt), iv: b64(iv), ct: b64(ct) }));
+// `updated` rides outside the ciphertext (it is only a timestamp) so the reader can tell which of
+// the two sources - GitHub raw or the deployed copy - is actually the fresher one.
+const updated = JSON.parse(plain.toString("utf8")).updated ?? null;
+writeFileSync(join(here, "..", "public", "personal-data.enc.json"), JSON.stringify({ v: 1, kdf: "PBKDF2-SHA256-200k", updated, salt: b64(salt), iv: b64(iv), ct: b64(ct) }));
 console.log("encrypted", plain.length, "bytes → public/personal-data.enc.json");

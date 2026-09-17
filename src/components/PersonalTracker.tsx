@@ -27,6 +27,7 @@ type SyllabusItem = { n: number; title: string; status: string }; // current | p
 type Topic = { n: number; title: string; generated?: string; status?: string; md: string };
 type Revision = { syllabus: SyllabusItem[]; topics: Topic[]; rule?: string };
 type RevProgress = { topic: number; done: boolean; at: string };
+type Enc = { salt: string; iv: string; ct: string; updated?: string };
 type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; leads?: Lead[]; rulesLedger?: Rule[]; monitoring?: Mon; revision?: Revision };
 
 const LEAD_ORDER = ["to_call", "call_back", "to_email", "called", "emailed", "replied", "no_answer", "name_only", "closed"];
@@ -203,7 +204,7 @@ function TopicBody({ topic }: { topic: Topic }) {
 }
 
 export function PersonalTracker() {
-  const [enc, setEnc] = useState<{ salt: string; iv: string; ct: string } | null>(null);
+  const [enc, setEnc] = useState<Enc | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -260,11 +261,18 @@ export function PersonalTracker() {
     // Read data from GitHub raw first (updates via `git push`, no Vercel deploy),
     // falling back to the deployed copy. This keeps the dashboard live even when
     // the Vercel free-tier daily deploy cap is hit.
+    // raw.githubusercontent.com is edge-cached and different edges go stale at different times, so
+    // asking it first can serve numbers older than the deployed copy. Ask both and keep whichever
+    // payload carries the newer `updated` stamp; either one alone is still enough to render.
     const RAW = "https://raw.githubusercontent.com/adityamukhopadhyay/portfolio/main/public/personal-data.enc.json";
-    fetch(`${RAW}?t=${Date.now()}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .catch(() => fetch(`/personal-data.enc.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.json()))
-      .then((p) => p)
+    const grab = (u: string) => fetch(`${u}?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject(r.status)));
+    Promise.allSettled([grab(RAW), grab("/personal-data.enc.json")])
+      .then((rs) => {
+        const ok = rs.filter((r): r is PromiseFulfilledResult<Enc> => r.status === "fulfilled").map((r) => r.value);
+        if (!ok.length) throw new Error("no payload");
+        const at = (e: Enc) => Date.parse(e.updated ?? "") || 0;   // an unstamped payload is the older one
+        return ok.sort((a, b) => at(b) - at(a))[0];
+      })
       .then((p) => {
         setEnc(p);
         let stored: string | null = null;
