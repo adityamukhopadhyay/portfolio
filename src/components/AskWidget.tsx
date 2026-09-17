@@ -149,11 +149,11 @@ function SettingsPopover({ opts, setOpts, onClose }: { opts: Opts; setOpts: (o: 
       <div className="mb-2 flex items-center justify-between"><span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Retrieval settings</span><button onClick={onClose} aria-label="Close" className="text-faint hover:text-ink"><Glyph k="close" size={12} /></button></div>
       {([
         ["Pipeline", "Which index is searched", <Seg key="p" value={opts.pipeline || "default"} onChange={(v) => setOpts({ ...opts, pipeline: v === "default" ? "" : (v as Opts["pipeline"]) })} options={[["default", "auto"], ["a", "A"], ["b", "B"]]} />],
-        ["Expansion", "Rewrite the question 2 extra ways", <Seg key="e" value={tri(opts.expand)} onChange={(v) => setOpts({ ...opts, expand: fromTri(v) })} options={[["default", "auto"], ["on", "on"], ["off", "off"]]} />],
+        ["Expansion", "Search 2 extra phrasings, fuse results", <Seg key="e" value={tri(opts.expand)} onChange={(v) => setOpts({ ...opts, expand: fromTri(v) })} options={[["default", "auto"], ["on", "on"], ["off", "off"]]} />],
         ["Rerank", "Listwise LLM rerank of candidates", <Seg key="r" value={tri(opts.rerank)} onChange={(v) => setOpts({ ...opts, rerank: fromTri(v) })} options={[["default", "auto"], ["on", "on"], ["off", "off"]]} />],
       ] as [string, string, ReactNode][]).map(([l, d, c]) => (
         <div key={l} className="flex items-center justify-between gap-3 py-1.5"><div><div className="text-[12px] text-ink">{l}</div><div className="text-[10.5px] text-faint">{d}</div></div>{c}</div>))}
-      <p className="mt-2 text-[10.5px] leading-snug text-faint">A = section chunks · B = atomic propositions → parent section. <em>auto</em> uses the A/B winner.</p>
+      <p className="mt-2 text-[10.5px] leading-snug text-faint">A = section chunks (the A/B winner) · B = atomic propositions → parent section. <em>auto</em> = the server defaults: A, expansion on, rerank on.</p>
     </div>
   );
 }

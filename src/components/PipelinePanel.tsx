@@ -44,7 +44,7 @@ const DESC: Record<string, string> = {
   followup_rewrite: "The question referenced earlier turns; the light model rewrote it to stand alone.",
   persona_rewrite: "Visitors say \"you\"; the documents say \"Aditya\". A deterministic rewrite for the search query only — the answer still sees the original wording.",
   cache: "Answers are cached on the normalised question. Pre-drafted questions are pinned with their trace.",
-  query_expansion: "Two alternative phrasings from the light model; each is searched, results are fused.",
+  query_expansion: "The light model rewrites the question two more ways (synonyms, the concrete technical terms an engineer would use). Each phrasing is searched separately and the results are fused — better recall for vaguely worded questions, at ~1 s.",
   embed_query: "Gemini embedding, RETRIEVAL_QUERY, 768-d, unit-normalised.",
   dense_search: "Nearest neighbours by dot product in Qdrant.",
   sparse_search: "BM25-style sparse vectors, IDF applied in Qdrant — exact technical tokens.",
@@ -134,6 +134,25 @@ function Body({ s }: { s: Step }) {
 }
 
 /* ---------- panel ---------- */
+type Row = { kind: "step"; step: Step; idx: number } | { kind: "group"; query: string; n: number; total: number; steps: Step[]; ms: number; idx: number; pending?: boolean };
+
+/** Group each query's dense → sparse → RRF triple so multi-query runs read as one row per phrasing. */
+function groupRows(steps: Step[]): Row[] {
+  const rows: Row[] = []; let i = 0; let q = 0;
+  const nq = steps.filter((s) => s.name === "dense_search").length;
+  while (i < steps.length) {
+    const s = steps[i];
+    if (s.name === "dense_search") {
+      const grp: Step[] = [s]; let j = i + 1;
+      while (j < steps.length && (steps[j].name === "sparse_search" || steps[j].name === "rrf_fusion")) { grp.push(steps[j]); j++; }
+      q += 1;
+      rows.push({ kind: "group", query: String((s.data as any)?.query ?? ""), n: q, total: nq, steps: grp, ms: grp.reduce((a, x) => a + x.ms, 0), idx: i, pending: grp.some((x) => x.pending) });
+      i = j;
+    } else { rows.push({ kind: "step", step: s, idx: i }); i += 1; }
+  }
+  return rows;
+}
+
 export function PipelinePanel({ trace, live, onClose }: { trace: Trace | null; live?: boolean; onClose?: () => void }) {
   const [open, setOpen] = useState<Record<number, boolean>>({});
   const [showCalls, setShowCalls] = useState(false);
@@ -167,17 +186,45 @@ export function PipelinePanel({ trace, live, onClose }: { trace: Trace | null; l
               </div>
             )}
             <ol className="divide-y divide-line/60">
-              {trace.steps.map((s, i) => {
-                const isOpen = !!open[i];
+              {groupRows(trace.steps).map((r) => {
+                if (r.kind === "step") {
+                  const s = r.step; const i = r.idx; const isOpen = !!open[i];
+                  return (
+                    <li key={i}>
+                      <button onClick={() => setOpen((o) => ({ ...o, [i]: !isOpen }))} className="flex w-full items-center gap-2.5 py-2 text-left">
+                        <Icon k={ICON[s.name] ?? "dot"} className={isOpen ? "text-accent" : "text-faint"} />
+                        <span className="flex-1 text-ink">{LABEL[s.name] ?? s.name}</span>
+                        {s.pending ? <span className="font-mono text-[10.5px] text-warn">…</span> : (s.data as any)?.skipped ? <span className="font-mono text-[10.5px] text-faint">off</span> : <span className="font-mono text-[10.5px] text-faint">{ms(s.ms)}</span>}
+                        <span className={`text-[10px] text-faint transition-transform ${isOpen ? "rotate-90" : ""}`}>›</span>
+                      </button>
+                      {isOpen && <div className="pb-3 pl-6"><p className="mb-1.5 text-[11px] text-faint">{DESC[s.name]}</p><Body s={s} /></div>}
+                    </li>);
+                }
+                const i = r.idx; const isOpen = !!open[i];
                 return (
                   <li key={i}>
                     <button onClick={() => setOpen((o) => ({ ...o, [i]: !isOpen }))} className="flex w-full items-center gap-2.5 py-2 text-left">
-                      <Icon k={ICON[s.name] ?? "dot"} className={isOpen ? "text-accent" : "text-faint"} />
-                      <span className="flex-1 text-ink">{LABEL[s.name] ?? s.name}</span>
-                      {s.pending ? <span className="font-mono text-[10.5px] text-warn">…</span> : (s.data as any)?.skipped ? <span className="font-mono text-[10.5px] text-faint">off</span> : <span className="font-mono text-[10.5px] text-faint">{ms(s.ms)}</span>}
+                      <Icon k="dense" className={isOpen ? "text-accent" : "text-faint"} />
+                      <span className="min-w-0 flex-1">
+                        <span className="text-ink">Search{r.total > 1 ? ` · query ${r.n} of ${r.total}` : ""}</span>
+                        {r.total > 1 && <span className="block truncate text-[11px] text-faint">{r.query}</span>}
+                      </span>
+                      {r.pending ? <span className="font-mono text-[10.5px] text-warn">…</span> : <span className="font-mono text-[10.5px] text-faint">{ms(r.ms)}</span>}
                       <span className={`text-[10px] text-faint transition-transform ${isOpen ? "rotate-90" : ""}`}>›</span>
                     </button>
-                    {isOpen && <div className="pb-3 pl-6"><p className="mb-1.5 text-[11px] text-faint">{DESC[s.name]}</p><Body s={s} /></div>}
+                    {isOpen && (
+                      <ol className="mb-2 ml-6 divide-y divide-line/40 border-l border-line/60 pl-3">
+                        {r.steps.map((s, k) => { const key = i * 100 + k + 1; const so = !!open[key]; return (
+                          <li key={key}>
+                            <button onClick={() => setOpen((o) => ({ ...o, [key]: !so }))} className="flex w-full items-center gap-2.5 py-1.5 text-left">
+                              <Icon k={ICON[s.name] ?? "dot"} className={so ? "text-accent" : "text-faint"} />
+                              <span className="flex-1 text-ink">{LABEL[s.name] ?? s.name}</span>
+                              <span className="font-mono text-[10.5px] text-faint">{ms(s.ms)}</span>
+                              <span className={`text-[10px] text-faint transition-transform ${so ? "rotate-90" : ""}`}>›</span>
+                            </button>
+                            {so && <div className="pb-2 pl-6"><p className="mb-1.5 text-[11px] text-faint">{DESC[s.name]}</p><Body s={s} /></div>}
+                          </li>); })}
+                      </ol>)}
                   </li>);
               })}
             </ol>
