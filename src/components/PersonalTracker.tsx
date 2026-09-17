@@ -456,7 +456,7 @@ export function PersonalTracker() {
 
       {/* rules ledger */}
       {data.rulesLedger?.length ? (
-        <details className="mt-4 rounded-xl border border-line bg-surface px-5 py-3" open>
+        <details className="mt-3 rounded-xl border border-line bg-surface px-5 py-3">
           <summary className="cursor-pointer font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Rules applied to every application</summary>
           <ul className="mt-3 space-y-1.5 text-[13px] text-muted">
             {data.rulesLedger.map((r, i) => (
@@ -481,11 +481,15 @@ export function PersonalTracker() {
 
       {/* leads — people to call */}
       {data.leads?.length ? (
-        <section className="mt-10">
-          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-            leads to call <span className="text-faint">· {data.leads.length} · phone first, then email</span>
-          </h2>
-          <div className="divide-y divide-line rounded-xl border border-line bg-surface">
+        <details className="mt-3 rounded-xl border border-line bg-surface">
+          <summary className="flex cursor-pointer list-none items-baseline gap-3 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+            <span className="text-[14px] font-semibold text-ink">Leads to call</span>
+            <span className="font-mono text-[11px] text-faint">
+              {data.leads.length} · {data.leads.filter((l) => (l.status ?? "to_call") === "to_call").length} not contacted yet · phone first, then email
+            </span>
+            <span className="ml-auto text-faint">+</span>
+          </summary>
+          <div className="divide-y divide-line border-t border-line">
             {[...data.leads]
               .sort((a, b) => LEAD_ORDER.indexOf(a.status ?? "to_call") - LEAD_ORDER.indexOf(b.status ?? "to_call") || (a.phone ? 0 : 1) - (b.phone ? 0 : 1))
               .map((l) => (
@@ -519,18 +523,20 @@ export function PersonalTracker() {
                 </details>
               ))}
           </div>
-        </section>
+        </details>
       ) : null}
 
       {/* revision — one interview-prep topic at a time; generation happens in Claude Code */}
       {rev && curTopic ? (
-        <section className="mt-10">
-          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-            revision <span className="text-faint">· topic {curTopic.n} of {rev.syllabus.length} · {rev.syllabus.filter((s) => s.status === "done").length} done</span>
-          </h2>
-          <div className="rounded-xl border border-line bg-surface">
+        <details className="mt-3 rounded-xl border border-line bg-surface">
+          <summary className="flex cursor-pointer list-none items-baseline gap-3 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+            <span className="text-[14px] font-semibold text-ink">Revision</span>
+            <span className="font-mono text-[11px] text-faint">topic {curTopic.n} of {rev.syllabus.length} · {rev.syllabus.filter((s) => s.status === "done").length} done · {curTopic.title}</span>
+            <span className="ml-auto text-faint">+</span>
+          </summary>
+          <div className="border-t border-line">
             {/* syllabus */}
-            <details className="group px-5 py-3.5" open>
+            <details className="group px-5 py-3.5">
               <summary className="flex cursor-pointer list-none items-baseline font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint [&::-webkit-details-marker]:hidden">
                 syllabus · {rev.syllabus.length} topics
                 <span className="ml-auto normal-case tracking-normal transition-transform group-open:rotate-45">+</span>
@@ -594,8 +600,8 @@ export function PersonalTracker() {
               </details>
             ))}
           </div>
-          {rev.rule ? <p className="mt-2 font-mono text-[10.5px] leading-relaxed text-faint">{rev.rule}</p> : null}
-        </section>
+          {rev.rule ? <p className="px-5 pb-4 font-mono text-[10.5px] leading-relaxed text-faint">{rev.rule}</p> : null}
+        </details>
       ) : null}
 
       {/* ---- detail: collapsed by default. The dashboard above is the page; this is the drill-down. ---- */}
