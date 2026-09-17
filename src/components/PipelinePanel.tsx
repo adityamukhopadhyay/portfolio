@@ -186,7 +186,7 @@ export function PipelinePanel({ trace, live, onClose }: { trace: Trace | null; l
                 </button>
                 {showCalls && <ul className="mt-1 space-y-1 text-[11px]">{trace.calls.map((c, i) => (
                   <li key={i} className="flex items-baseline gap-2"><span className="w-14 shrink-0 font-mono text-faint">{c.kind}</span><span className="flex-1 truncate text-muted">{c.model.replace("models/", "").replace("gemini-", "")}</span>
-                    <span className="font-mono text-faint">{Math.round(c.ms)} ms{c.detail?.output_tokens ? ` · ${c.detail.output_tokens} tok` : ""}</span></li>))}</ul>}
+                    <span className="font-mono text-faint">{Math.round(c.ms)} ms{c.detail?.output_tokens ? ` · ${c.detail.output_tokens} out tok` : ""}{c.detail?.texts ? ` · ${c.detail.texts} text${c.detail.texts === 1 ? "" : "s"}` : ""}</span></li>))}</ul>}
               </div>
             )}
           </>

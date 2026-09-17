@@ -1,17 +1,64 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { PipelinePanel, GlyphButton, type Step, type Trace } from "./PipelinePanel";
+import { PipelinePanel, type Step, type Trace } from "./PipelinePanel";
 
 // The RAG backend on Railway. Override with NEXT_PUBLIC_RAG_API_URL at build time.
 export const API = process.env.NEXT_PUBLIC_RAG_API_URL ?? "https://rag-api-production-5a59.up.railway.app";
 
 type Source = { n: number; title: string; heading: string; page_url: string | null; doc_url: string | null; snippet: string; text?: string };
-type Msg = { role: "user" | "assistant"; content: string; sources?: Source[]; error?: string; pending?: boolean; trace?: Trace | null; live?: boolean };
+type Msg = { role: "user" | "assistant"; content: string; sources?: Source[]; error?: string; pending?: boolean; trace?: Trace | null; live?: boolean; showSources?: boolean };
 type Suggestion = { q: string; group: string; cached: boolean };
 type Opts = { pipeline: "a" | "b" | ""; expand: boolean | null; rerank: boolean | null };
 const DEFAULT_OPTS: Opts = { pipeline: "", expand: null, rerank: null };
 
+/* ────────────────────────── primitives ────────────────────────── */
+
+/** Icon-only button with a hover tooltip. */
+export function IconButton({ label, onClick, active, children, className = "" }: { label: string; onClick?: () => void; active?: boolean; children: ReactNode; className?: string }) {
+  return (
+    <span className={`group relative inline-flex ${className}`}>
+      <button type="button" onClick={onClick} aria-label={label}
+              className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${active ? "bg-accent-soft text-accent" : "text-faint hover:bg-surface-2 hover:text-ink"}`}>
+        {children}
+      </button>
+      <span role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-30 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-line bg-bg px-2 py-1 font-mono text-[10.5px] text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+        {label}
+      </span>
+    </span>
+  );
+}
+
+const Ic = {
+  inspector: <path d="M2 12.5h12M3 9.5l3-3 3 3 4-5" />,
+  settings: <><path d="M2 5h12M2 11h12" /><circle cx="6" cy="5" r="1.7" fill="var(--bg)" /><circle cx="10" cy="11" r="1.7" fill="var(--bg)" /></>,
+  sources: <><path d="M3 3h6.5a2 2 0 0 1 2 2v9H5a2 2 0 0 1-2-2z" /><path d="M11.5 5h1.5v9H5" /></>,
+  copy: <><rect x="5" y="5" width="8" height="8" rx="1.5" /><path d="M3 10V4a1 1 0 0 1 1-1h6" /></>,
+  check: <path d="M3 8.5l3 3 7-7" />,
+  send: <path d="M8 13V3M4 7l4-4 4 4" />,
+  close: <path d="M4 4l8 8M12 4l-8 8" />,
+  open: <path d="M6 3H3v10h10v-3M9 3h4v4M13 3L7 9" />,
+  spark: <path d="M8 1.5l1.5 4 4 1.5-4 1.5L8 12.5 6.5 8.5l-4-1.5 4-1.5z" />,
+  bolt: <path d="M9 1.5 3 9h4l-1 5.5L13 7H9z" />,
+  more: <path d="M4 6l4 4 4-4" />,
+};
+export function Glyph({ k, size = 15, className = "" }: { k: keyof typeof Ic; size?: number; className?: string }) {
+  return <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>{Ic[k]}</svg>;
+}
+
+/** Segmented control. */
+function Seg<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: [T, string][] }) {
+  return (
+    <div className="inline-flex rounded-lg border border-line bg-bg p-0.5">
+      {options.map(([v, l]) => (
+        <button key={v} type="button" onClick={() => onChange(v)}
+                className={`rounded-md px-2.5 py-1 font-mono text-[11px] transition-colors ${value === v ? "bg-surface-2 text-ink" : "text-faint hover:text-muted"}`}>{l}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ────────────────────────── SSE ────────────────────────── */
 async function* sse(res: Response) {
   const reader = res.body!.getReader(); const dec = new TextDecoder(); let buf = "";
   const parse = (block: string) => {
@@ -27,17 +74,19 @@ async function* sse(res: Response) {
   const tail = parse(buf.replace(/\r\n/g, "\n")); if (tail) yield tail;
 }
 
-/* ---------- answer rendering: paragraphs, bullets, **bold**, `code`, [n] citations ---------- */
+/* ────────────────────────── answer rendering ────────────────────────── */
 function Inline({ text, sources }: { text: string; sources?: Source[] }) {
   const parts = text.split(/(\[\d+\](?:\[\d+\])*|\*\*[^*]+\*\*|`[^`]+`)/g);
   return <>{parts.map((p, i) => {
-    if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i} className="font-semibold">{p.slice(2, -2)}</strong>;
-    if (/^`[^`]+`$/.test(p)) return <code key={i} className="rounded bg-surface-2 px-1 font-mono text-[12px]">{p.slice(1, -1)}</code>;
+    if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i} className="font-semibold text-ink">{p.slice(2, -2)}</strong>;
+    if (/^`[^`]+`$/.test(p)) return <code key={i} className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[12px]">{p.slice(1, -1)}</code>;
     if (!/^\[\d+\]/.test(p)) return <span key={i}>{p}</span>;
     return [...p.matchAll(/\[(\d+)\]/g)].map((x, j) => {
       const n = Number(x[1]); const s = sources?.find((y) => y.n === n); const href = s?.page_url ?? s?.doc_url ?? undefined;
-      const sup = <sup key={`${i}-${j}`} className="ml-[1px] font-mono text-[10px] text-accent" title={s ? `${s.title} · ${s.heading}` : undefined}>{n}</sup>;
-      return href ? <a key={`${i}-${j}`} href={href} target="_blank" rel="noreferrer">{sup}</a> : sup;
+      const chip = <sup key={`${i}-${j}`} className="group relative ml-[2px] inline-grid h-[15px] min-w-[15px] place-items-center rounded-[4px] bg-accent-soft px-[3px] font-mono text-[9.5px] leading-none text-accent align-[3px]">
+        {n}{s && <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-64 rounded-md border border-line bg-bg px-2 py-1.5 text-left font-sans text-[11px] font-normal normal-case leading-snug text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100"><span className="text-ink">{s.title}</span><br />{s.heading.split(" › ").slice(1).join(" › ")}</span>}
+      </sup>;
+      return href ? <a key={`${i}-${j}`} href={href} target="_blank" rel="noreferrer">{chip}</a> : chip;
     });
   })}</>;
 }
@@ -49,43 +98,50 @@ function Answer({ text, sources }: { text: string; sources?: Source[] }) {
     else if (!line.trim()) { if (blocks[blocks.length - 1]?.lines.length) blocks.push({ kind: "p", lines: [] }); }
     else { const last = blocks[blocks.length - 1]; if (last?.kind === "p") last.lines.push(line); else blocks.push({ kind: "p", lines: [line] }); }
   }
-  return <div className="space-y-2.5 text-[14px] leading-[1.65] text-ink">{blocks.filter((b) => b.lines.length).map((b, i) =>
-    b.kind === "ul" ? <ul key={i} className="list-disc space-y-1 pl-5">{b.lines.map((l, j) => <li key={j}><Inline text={l} sources={sources} /></li>)}</ul>
+  return <div className="space-y-2.5 text-[14px] leading-[1.65] text-ink/90">{blocks.filter((b) => b.lines.length).map((b, i) =>
+    b.kind === "ul" ? <ul key={i} className="space-y-1.5 pl-1">{b.lines.map((l, j) => <li key={j} className="flex gap-2"><span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-accent/70" /><span><Inline text={l} sources={sources} /></span></li>)}</ul>
                     : <p key={i}><Inline text={b.lines.join(" ")} sources={sources} /></p>)}</div>;
 }
 
-function SourcesLine({ sources }: { sources: Source[] }) {
+function SourceCards({ sources }: { sources: Source[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div className="mt-2 text-[11.5px]">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-faint">
-        <span>Sources</span>
-        {sources.map((s) => <button key={s.n} onClick={() => setOpen(open === s.n ? null : s.n)} className={`hover:text-accent ${open === s.n ? "text-accent" : "text-muted"}`}><span className="font-mono">{s.n}</span> {s.title}</button>)}
+    <div className="mt-3 border-t border-line/70 pt-3">
+      <div className="flex flex-wrap gap-1.5">
+        {sources.map((s) => (
+          <button key={s.n} type="button" onClick={() => setOpen(open === s.n ? null : s.n)} title={s.heading}
+                  className={`group inline-flex max-w-full items-center gap-1.5 rounded-lg border px-2 py-1 text-left text-[11.5px] transition-colors ${open === s.n ? "border-accent/50 bg-accent-soft text-accent" : "border-line bg-bg text-muted hover:border-rule hover:text-ink"}`}>
+            <span className="font-mono text-[10px] text-accent">{s.n}</span><span className="truncate">{s.title}</span>
+          </button>))}
       </div>
       {open != null && (() => { const s = sources.find((x) => x.n === open)!; return (
-        <div className="mt-1.5 rounded-lg bg-surface-2/60 p-2.5 text-[12px] text-muted">
-          <div className="mb-1 text-faint">{s.heading}</div>
+        <div className="mt-2 rounded-lg border border-line bg-bg p-3 text-[12px] leading-relaxed text-muted">
+          <div className="mb-1 font-mono text-[10.5px] text-faint">{s.heading}</div>
           <div className="line-clamp-6 whitespace-pre-wrap">{s.text ?? s.snippet}</div>
-          <div className="mt-1.5 flex gap-3 font-mono text-[11px]">{s.page_url && <a className="text-accent" href={s.page_url} target="_blank" rel="noreferrer">project page ↗</a>}{s.doc_url && <a className="text-accent" href={s.doc_url} target="_blank" rel="noreferrer">document ↗</a>}</div>
+          <div className="mt-2 flex gap-4 font-mono text-[11px]">{s.page_url && <a className="text-accent hover:underline" href={s.page_url} target="_blank" rel="noreferrer">project page ↗</a>}{s.doc_url && <a className="text-accent hover:underline" href={s.doc_url} target="_blank" rel="noreferrer">source document ↗</a>}</div>
         </div>); })()}
     </div>
   );
 }
 
-function Settings({ opts, setOpts }: { opts: Opts; setOpts: (o: Opts) => void }) {
-  const Sel = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) => (
-    <label className="flex items-center justify-between gap-3 py-1"><span className="text-muted">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded border border-line bg-bg px-1.5 py-0.5 text-ink">{options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>);
+function SettingsPopover({ opts, setOpts, onClose }: { opts: Opts; setOpts: (o: Opts) => void; onClose: () => void }) {
+  const tri = (v: boolean | null): "default" | "on" | "off" => (v == null ? "default" : v ? "on" : "off");
+  const fromTri = (v: string) => (v === "default" ? null : v === "on");
   return (
-    <div className="absolute right-3 top-10 z-10 w-56 rounded-xl border border-line bg-bg p-3 font-mono text-[11px] shadow-xl">
-      <Sel label="pipeline" value={opts.pipeline} onChange={(v) => setOpts({ ...opts, pipeline: v as Opts["pipeline"] })} options={[["", "server default"], ["a", "A · sections"], ["b", "B · propositions"]]} />
-      <Sel label="expansion" value={opts.expand == null ? "" : String(opts.expand)} onChange={(v) => setOpts({ ...opts, expand: v === "" ? null : v === "true" })} options={[["", "default"], ["true", "on"], ["false", "off"]]} />
-      <Sel label="rerank" value={opts.rerank == null ? "" : String(opts.rerank)} onChange={(v) => setOpts({ ...opts, rerank: v === "" ? null : v === "true" })} options={[["", "default"], ["true", "on"], ["false", "off"]]} />
+    <div className="absolute right-3 top-12 z-20 w-[260px] rounded-xl border border-line bg-bg p-3 shadow-2xl">
+      <div className="mb-2 flex items-center justify-between"><span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Retrieval settings</span><button onClick={onClose} aria-label="Close" className="text-faint hover:text-ink"><Glyph k="close" size={12} /></button></div>
+      {([
+        ["Pipeline", "Which index is searched", <Seg key="p" value={opts.pipeline || "default"} onChange={(v) => setOpts({ ...opts, pipeline: v === "default" ? "" : (v as Opts["pipeline"]) })} options={[["default", "auto"], ["a", "A"], ["b", "B"]]} />],
+        ["Expansion", "Rewrite the question 2 extra ways", <Seg key="e" value={tri(opts.expand)} onChange={(v) => setOpts({ ...opts, expand: fromTri(v) })} options={[["default", "auto"], ["on", "on"], ["off", "off"]]} />],
+        ["Rerank", "Listwise LLM rerank of candidates", <Seg key="r" value={tri(opts.rerank)} onChange={(v) => setOpts({ ...opts, rerank: fromTri(v) })} options={[["default", "auto"], ["on", "on"], ["off", "off"]]} />],
+      ] as [string, string, ReactNode][]).map(([l, d, c]) => (
+        <div key={l} className="flex items-center justify-between gap-3 py-1.5"><div><div className="text-[12px] text-ink">{l}</div><div className="text-[10.5px] text-faint">{d}</div></div>{c}</div>))}
+      <p className="mt-2 text-[10.5px] leading-snug text-faint">A = section chunks · B = atomic propositions → parent section. <em>auto</em> uses the A/B winner.</p>
     </div>
   );
 }
 
-/* ---------- the panel (used by the widget and the /ask page) ---------- */
+/* ────────────────────────── the panel ────────────────────────── */
 export function AskPanel({ full = false, extra, onInspectorChange }: { full?: boolean; extra?: ReactNode; onInspectorChange?: (open: boolean) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -96,16 +152,21 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
   const [showSettings, setShowSettings] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(full);
   const [inspect, setInspect] = useState<number | null>(null);
+  const [health, setHealth] = useState<{ ok: boolean; documents?: number; collections?: Record<string, number> } | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try { const v = localStorage.getItem("ask.opts"); if (v) setOpts({ ...DEFAULT_OPTS, ...JSON.parse(v) }); } catch {}
     fetch(`${API}/suggestions`).then((r) => r.json()).then((d) => setSugg(d.items ?? [])).catch(() => {});
+    fetch(`${API}/health`).then((r) => r.json()).then((d) => setHealth({ ok: !!d.ok, documents: d.documents, collections: d.collections })).catch(() => setHealth({ ok: false }));
   }, []);
   useEffect(() => { try { localStorage.setItem("ask.opts", JSON.stringify(opts)); } catch {} }, [opts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs]);
 
   const patchLast = (f: (m: Msg) => Msg) => setMsgs((m) => [...m.slice(0, -1), f(m[m.length - 1])]);
+  const patchAt = (i: number, f: (m: Msg) => Msg) => setMsgs((m) => m.map((x, j) => (j === i ? f(x) : x)));
+  const toggleInspector = (next: boolean) => { setInspectorOpen(next); onInspectorChange?.(next); };
 
   const ask = useCallback(async (q: string) => {
     q = q.trim(); if (!q || busy) return;
@@ -134,57 +195,79 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
     finally { setBusy(false); patchLast((m) => ({ ...m, pending: false, live: false })); }
   }, [busy, msgs, opts]);
 
+  const copy = async (i: number, text: string) => { try { await navigator.clipboard.writeText(text.replace(/\[\d+\]/g, "")); setCopied(i); setTimeout(() => setCopied(null), 1400); } catch {} };
+
   const inspected = inspect != null ? msgs[inspect] : null;
   const firstSugg = sugg.slice(0, 4);
   const groups = Array.from(new Set(sugg.map((s) => s.group)));
 
   const chat = (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {/* header: title + two glyphs, nothing else */}
-      <div className="flex items-center justify-between px-4 py-2.5">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Ask about Aditya</span>
+      {/* header */}
+      <div className="flex items-center justify-between border-b border-line/70 px-4 py-2.5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent text-accent-ink"><Glyph k="spark" size={13} /></span>
+          <div className="leading-tight">
+            <div className="text-[13px] font-semibold text-ink">Ask about Aditya</div>
+            <div className="flex items-center gap-1.5 font-mono text-[10px] text-faint">
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${health?.ok ? "bg-accent" : health ? "bg-warn" : "bg-faint"}`} />
+              {health?.ok ? `RAG · ${health.documents ?? "—"} documents · ${health.collections?.sections ?? "—"} sections` : health ? "offline" : "connecting…"}
+            </div>
+          </div>
+        </div>
         <div className="flex items-center gap-0.5">
-          <GlyphButton label="Pipeline inspector" active={inspectorOpen} onClick={() => { const next = !inspectorOpen; setInspectorOpen(next); onInspectorChange?.(next); }}>
-            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 12h12M3 9l3-3 3 3 4-5" /></svg>
-          </GlyphButton>
-          <GlyphButton label="Settings" active={showSettings} onClick={() => setShowSettings((v) => !v)}>
-            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 5h12M2 11h12" /><circle cx="6" cy="5" r="1.6" fill="var(--bg)" /><circle cx="10" cy="11" r="1.6" fill="var(--bg)" /></svg>
-          </GlyphButton>
+          <IconButton label="Pipeline inspector" active={inspectorOpen} onClick={() => toggleInspector(!inspectorOpen)}><Glyph k="inspector" /></IconButton>
+          <IconButton label="Retrieval settings" active={showSettings} onClick={() => setShowSettings((v) => !v)}><Glyph k="settings" /></IconButton>
           {extra}
         </div>
       </div>
-      {showSettings && <Settings opts={opts} setOpts={setOpts} />}
+      {showSettings && <SettingsPopover opts={opts} setOpts={setOpts} onClose={() => setShowSettings(false)} />}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+      {/* thread */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {msgs.length === 0 && (
-          <div className="pt-2">
-            <p className="text-[14px] leading-relaxed text-muted">Grounded in Aditya&apos;s project documents. Every answer cites where it came from.</p>
-            <div className="mt-4 flex flex-col items-start gap-1.5">
-              {(moreSugg ? [] : firstSugg).map((s) => <button key={s.q} onClick={() => ask(s.q)} className="text-left text-[13px] text-ink/80 hover:text-accent">{s.q}</button>)}
-              {moreSugg && groups.map((g) => (
-                <div key={g} className="mt-2 w-full">
-                  <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{g}</div>
-                  <div className="flex flex-col items-start gap-1.5">{sugg.filter((s) => s.group === g).map((s) => <button key={s.q} onClick={() => ask(s.q)} className="text-left text-[13px] text-ink/80 hover:text-accent">{s.q}</button>)}</div>
-                </div>))}
-              {sugg.length > 4 && <button onClick={() => setMoreSugg((v) => !v)} className="mt-1 font-mono text-[11px] text-faint hover:text-accent">{moreSugg ? "fewer" : "more questions"}</button>}
+          <div className="rise">
+            <p className="max-w-md text-[14px] leading-relaxed text-muted">
+              Ask how something was built, what failed, or what a number means. Answers are retrieved from Aditya&apos;s project documents and cite their source — open the inspector to watch the retrieval run.
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {(moreSugg ? sugg : firstSugg).map((s, i) => (
+                <button key={s.q} type="button" onClick={() => ask(s.q)} style={{ animationDelay: `${60 + i * 40}ms` }}
+                        className="rise group flex items-start gap-2.5 rounded-xl border border-line bg-bg px-3.5 py-3 text-left transition-colors hover:border-accent/50 hover:bg-surface">
+                  <span className="mt-[3px] text-faint transition-colors group-hover:text-accent"><Glyph k={s.cached ? "bolt" : "spark"} size={12} /></span>
+                  <span className="text-[13px] leading-snug text-ink/85 group-hover:text-ink">{s.q}</span>
+                </button>))}
             </div>
+            {sugg.length > 4 && (
+              <button type="button" onClick={() => setMoreSugg((v) => !v)} className="mt-3 inline-flex items-center gap-1 font-mono text-[11px] text-faint hover:text-accent">
+                {moreSugg ? "fewer questions" : `${sugg.length - 4} more questions`}<Glyph k="more" size={11} className={moreSugg ? "rotate-180" : ""} />
+              </button>)}
           </div>
         )}
         {msgs.map((m, i) => (
-          <div key={i} className="mt-5 first:mt-2">
+          <div key={i} className={`rise ${i ? "mt-5" : ""}`}>
             {m.role === "user" ? (
-              <div className="flex justify-end"><div className="max-w-[85%] rounded-2xl rounded-br-md bg-surface-2 px-3.5 py-2 text-[14px] text-ink">{m.content}</div></div>
+              <div className="flex justify-end"><div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-[14px] leading-relaxed text-accent-ink">{m.content}</div></div>
             ) : (
-              <div className="pr-2">
-                {m.error ? <p className="text-[13px] text-warn">{m.error}</p>
-                  : m.pending && !m.content ? <p className="font-mono text-[11.5px] text-faint">{m.trace?.steps?.length ? "thinking…" : "retrieving…"}</p>
-                  : <Answer text={m.content} sources={m.sources} />}
-                {m.sources && m.sources.length > 0 && !m.pending && <SourcesLine sources={m.sources} />}
-                {m.trace && !m.pending && (
-                  <button onClick={() => { setInspect(i); setInspectorOpen(true); }} className={`mt-1.5 font-mono text-[10.5px] ${inspect === i && inspectorOpen ? "text-accent" : "text-faint hover:text-accent"}`}>
-                    {m.trace.total_ms != null ? `${(m.trace.total_ms / 1000).toFixed(1)} s` : ""}{m.trace.pipeline ? ` · pipeline ${m.trace.pipeline.toUpperCase()}` : ""}{m.trace.steps.length ? ` · ${m.trace.steps.length} steps` : ""}{m.trace.precomputed || m.trace.cached ? " · cached" : ""} · inspect
-                  </button>
-                )}
+              <div className="flex gap-2.5">
+                <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft text-accent"><Glyph k="spark" size={11} /></span>
+                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line/70 bg-surface px-4 py-3">
+                  {m.error ? <p className="text-[13px] text-warn">{m.error}</p>
+                    : m.pending && !m.content ? (
+                      <div className="flex items-center gap-2 font-mono text-[11.5px] text-faint">
+                        <span className="inline-flex gap-0.5"><i className="h-1 w-1 animate-pulse rounded-full bg-accent" /><i className="h-1 w-1 animate-pulse rounded-full bg-accent [animation-delay:150ms]" /><i className="h-1 w-1 animate-pulse rounded-full bg-accent [animation-delay:300ms]" /></span>
+                        {m.trace?.steps?.length ? `${m.trace.steps.length} steps · ${m.trace.steps[m.trace.steps.length - 1].name.replace(/_/g, " ")}` : "retrieving"}
+                      </div>)
+                    : <Answer text={m.content} sources={m.sources} />}
+                  {m.showSources && m.sources && m.sources.length > 0 && <SourceCards sources={m.sources} />}
+                  {!m.pending && !m.error && (
+                    <div className="mt-2.5 -mb-1 -ml-1.5 flex items-center gap-0.5">
+                      {m.sources && m.sources.length > 0 && <IconButton label={`${m.sources.length} sources`} active={!!m.showSources} onClick={() => patchAt(i, (x) => ({ ...x, showSources: !x.showSources }))}><Glyph k="sources" size={14} /></IconButton>}
+                      {m.trace && <IconButton label={`Inspect · ${m.trace.total_ms != null ? `${(m.trace.total_ms / 1000).toFixed(1)} s` : ""}${m.trace.pipeline ? ` · pipeline ${m.trace.pipeline.toUpperCase()}` : ""}${m.trace.precomputed || m.trace.cached ? " · cached" : ""}`} active={inspect === i && inspectorOpen} onClick={() => { setInspect(i); toggleInspector(true); }}><Glyph k="inspector" size={14} /></IconButton>}
+                      <IconButton label={copied === i ? "Copied" : "Copy answer"} onClick={() => copy(i, m.content)}><Glyph k={copied === i ? "check" : "copy"} size={14} /></IconButton>
+                      {m.trace?.total_ms != null && <span className="ml-1 font-mono text-[10.5px] text-faint">{(m.trace.total_ms / 1000).toFixed(1)} s{m.trace.precomputed || m.trace.cached ? " · cached" : ""}</span>}
+                    </div>)}
+                </div>
               </div>
             )}
           </div>
@@ -192,36 +275,38 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); ask(input); }} className="flex items-center gap-2 px-4 pb-4 pt-1">
-        <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={1000} disabled={busy} placeholder="Ask about a project, a decision, a number…"
-               className="min-w-0 flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-[14px] text-ink outline-none placeholder:text-faint focus:border-accent" />
-        <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="grid h-10 w-10 place-items-center rounded-full bg-accent text-accent-ink disabled:opacity-40">
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 13V3M4 7l4-4 4 4" /></svg>
-        </button>
+      {/* composer */}
+      <form onSubmit={(e) => { e.preventDefault(); ask(input); }} className="px-4 pb-3 pt-1">
+        <div className="flex items-center gap-1 rounded-2xl border border-line bg-bg pl-4 pr-1.5 transition-colors focus-within:border-accent/60">
+          <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={1000} disabled={busy} placeholder="Ask about a project, a decision, a number…"
+                 className="min-w-0 flex-1 bg-transparent py-3 text-[14px] text-ink outline-none placeholder:text-faint" />
+          <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="grid h-8 w-8 place-items-center rounded-xl bg-accent text-accent-ink transition-opacity disabled:opacity-30"><Glyph k="send" size={14} /></button>
+        </div>
+        <p className="mt-2 text-center font-mono text-[10px] text-faint">hybrid retrieval · dense + BM25 · listwise rerank · Gemini</p>
       </form>
     </div>
   );
 
-  const inspector = <PipelinePanel trace={inspected?.trace ?? null} live={inspected?.live} onClose={() => setInspectorOpen(false)} />;
+  const inspector = <PipelinePanel trace={inspected?.trace ?? null} live={inspected?.live} onClose={() => toggleInspector(false)} />;
 
   if (full) {
     return (
       <div className={`grid min-h-0 ${inspectorOpen ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "grid-cols-1"}`} style={{ height: "min(78dvh, 900px)" }}>
         <div className="flex min-h-0 flex-col">{chat}</div>
-        {inspectorOpen && <div className="hidden min-h-0 border-l border-line lg:flex lg:flex-col">{inspector}</div>}
-        {inspectorOpen && <div className="min-h-0 border-t border-line lg:hidden" style={{ maxHeight: "40dvh" }}>{inspector}</div>}
+        {inspectorOpen && <div className="hidden min-h-0 border-l border-line/70 bg-bg/40 lg:flex lg:flex-col">{inspector}</div>}
+        {inspectorOpen && <div className="min-h-0 border-t border-line/70 lg:hidden" style={{ maxHeight: "40dvh" }}>{inspector}</div>}
       </div>
     );
   }
   return (
-    <div className={`grid ${inspectorOpen ? "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-1"}`} style={{ height: "min(72dvh, 620px)" }}>
+    <div className={`grid ${inspectorOpen ? "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-1"}`} style={{ height: "min(74dvh, 640px)" }}>
       <div className="flex min-h-0 flex-col">{chat}</div>
-      {inspectorOpen && <div className="hidden min-h-0 border-l border-line sm:flex sm:flex-col">{inspector}</div>}
+      {inspectorOpen && <div className="hidden min-h-0 border-l border-line/70 bg-bg/40 sm:flex sm:flex-col">{inspector}</div>}
     </div>
   );
 }
 
-/* ---------- floating launcher (root layout); hidden on /ask ---------- */
+/* ────────────────────────── floating launcher ────────────────────────── */
 export function AskWidget() {
   const [open, setOpen] = useState(false);
   const [path, setPath] = useState("");
@@ -231,17 +316,16 @@ export function AskWidget() {
   return (
     <>
       {open && (
-        <div className={`fixed bottom-20 right-4 z-50 overflow-hidden rounded-2xl border border-line bg-bg shadow-2xl ${wide ? "w-[min(880px,calc(100vw-2rem))]" : "w-[min(440px,calc(100vw-2rem))]"}`}>
-          <AskPanel onInspectorChange={setWide} extra={
-            <span className="ml-1 flex items-center gap-2 font-mono text-[10.5px]">
-              <a href="/ask" className="text-faint hover:text-accent">open ↗</a>
-              <button onClick={() => setOpen(false)} aria-label="Close" className="text-faint hover:text-ink">✕</button>
-            </span>} />
+        <div className={`rise fixed bottom-20 right-4 z-50 overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_80px_-20px_rgba(0,0,0,.6)] ${wide ? "w-[min(920px,calc(100vw-2rem))]" : "w-[min(460px,calc(100vw-2rem))]"}`}>
+          <AskPanel onInspectorChange={setWide} extra={<>
+            <IconButton label="Open full page" onClick={() => { window.location.href = "/ask"; }}><Glyph k="open" size={14} /></IconButton>
+            <IconButton label="Close" onClick={() => setOpen(false)}><Glyph k="close" size={13} /></IconButton>
+          </>} />
         </div>
       )}
-      <button onClick={() => setOpen((o) => !o)} aria-label="Ask about Aditya"
-              className="fixed bottom-4 right-4 z-50 grid h-12 w-12 place-items-center rounded-full bg-accent text-accent-ink shadow-lg transition-transform hover:scale-[1.04]">
-        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h10v8H7l-3 2.5V11H3z" /></svg>
+      <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Close" : "Ask about Aditya"}
+              className="group fixed bottom-4 right-4 z-50 flex h-12 items-center gap-2 rounded-full bg-accent pl-4 pr-5 text-[13px] font-semibold text-accent-ink shadow-lg transition-transform hover:scale-[1.03]">
+        <Glyph k={open ? "close" : "spark"} size={15} />{open ? "Close" : "Ask"}
       </button>
     </>
   );
