@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PipelinePanel, type Step, type Trace } from "./PipelinePanel";
 import { BookCallModal } from "./BookCall";
+import { WhoCard, WhoPopover, useWho, type Who } from "./WhoAsked";
 
 // The RAG backend on Railway. Override with NEXT_PUBLIC_RAG_API_URL at build time.
 export const API = process.env.NEXT_PUBLIC_RAG_API_URL ?? "https://rag-api-production-5a59.up.railway.app";
@@ -53,6 +54,7 @@ const Ic = {
   bolt: <path d="M9 1.5 3 9h4l-1 5.5L13 7H9z" />,
   more: <path d="M4 6l4 4 4-4" />,
   calendar: <><rect x="2" y="3.5" width="12" height="10.5" rx="1.5" /><path d="M2 7h12M5 2v3M11 2v3" /></>,
+  person: <><circle cx="8" cy="5.5" r="2.6" /><path d="M2.8 13.5c0-2.7 2.3-4.4 5.2-4.4s5.2 1.7 5.2 4.4" /></>,
 };
 export function Glyph({ k, size = 15, className = "" }: { k: keyof typeof Ic; size?: number; className?: string }) {
   return <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>{Ic[k]}</svg>;
@@ -173,6 +175,10 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
   const [quota, setQuota] = useState<Quota>({ limit: null, remaining: null });
   const [copied, setCopied] = useState<number | null>(null);
   const [showBook, setShowBook] = useState(false);
+  const { who, save: saveWho, dismissed: whoDismissed, dismiss: dismissWho } = useWho();
+  const [showWho, setShowWho] = useState(false);
+  const answers = msgs.filter((m) => m.role === "assistant" && !m.pending && !m.error).length;
+  const askWhoInline = !who && !whoDismissed && answers >= 2;
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -239,11 +245,12 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
           <div className="leading-tight">
             <div className="text-[13px] font-semibold text-ink">Aditya Mukhopadhyay</div>
             <div className="font-mono text-[10px] text-faint">
-              {health?.ok ? `AI version of me · answers from my ${health.documents ?? "—"} project documents` : health ? "offline right now" : "connecting…"}
+              {who?.name ? `talking with ${who.name}` : health?.ok ? `AI version of me · answers from my ${health.documents ?? "—"} project documents` : health ? "offline right now" : "connecting…"}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-0.5">
+          <IconButton label={who?.name ? `You're ${who.name} — edit or remove` : "Tell me who's asking (optional)"} active={showWho || !!who} onClick={() => setShowWho((v) => !v)}><Glyph k="person" /></IconButton>
           <IconButton label="Book a call with me" active={showBook} onClick={() => setShowBook(true)}><Glyph k="calendar" /></IconButton>
           <IconButton label="Pipeline inspector" active={inspectorOpen} onClick={() => toggleInspector(!inspectorOpen)}><Glyph k="inspector" /></IconButton>
           <IconButton label="Retrieval settings" active={showSettings} onClick={() => setShowSettings((v) => !v)}><Glyph k="settings" /></IconButton>
@@ -251,6 +258,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
         </div>
       </div>
       {showSettings && <SettingsPopover opts={opts} setOpts={setOpts} onClose={() => setShowSettings(false)} />}
+      {showWho && <WhoPopover who={who} onSaved={(w) => { saveWho(w); setShowWho(false); }} onClear={() => { saveWho(null); setShowWho(false); }} onClose={() => setShowWho(false)} />}
 
       {/* thread */}
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 [overflow-wrap:anywhere]">
@@ -304,6 +312,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
             )}
           </div>
         ))}
+        {askWhoInline && <WhoCard onSaved={(w: Who) => { saveWho(w); dismissWho(); }} onSkip={dismissWho} />}
         <div ref={endRef} />
       </div>
 
