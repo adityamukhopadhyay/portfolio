@@ -11,6 +11,16 @@ type Msg = { role: "user" | "assistant"; content: string; sources?: Source[]; er
 type Suggestion = { q: string; group: string; cached: boolean };
 type Opts = { pipeline: "a" | "b" | ""; expand: boolean | null; rerank: boolean | null };
 const DEFAULT_OPTS: Opts = { pipeline: "", expand: null, rerank: null };
+type Quota = { limit: number | null; remaining: number | null };
+
+/** Stable per-browser id so the API can meter live questions per visitor. */
+function clientId(): string {
+  try {
+    let v = localStorage.getItem("ask.cid");
+    if (!v) { v = crypto.randomUUID(); localStorage.setItem("ask.cid", v); }
+    return v;
+  } catch { return "anon"; }
+}
 
 /* ────────────────────────── primitives ────────────────────────── */
 
@@ -96,7 +106,12 @@ function Answer({ text, sources }: { text: string; sources?: Source[] }) {
     const line = raw.trimEnd(); const m = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
     if (m) { const last = blocks[blocks.length - 1]; if (last?.kind === "ul") last.lines.push(m[1]); else blocks.push({ kind: "ul", lines: [m[1]] }); }
     else if (!line.trim()) { if (blocks[blocks.length - 1]?.lines.length) blocks.push({ kind: "p", lines: [] }); }
-    else { const last = blocks[blocks.length - 1]; if (last?.kind === "p") last.lines.push(line); else blocks.push({ kind: "p", lines: [line] }); }
+    else {
+      const last = blocks[blocks.length - 1];
+      if (last?.kind === "ul" && (/^[\s.,;:!?)\]]+$/.test(line) || /^\s+\S/.test(raw))) last.lines[last.lines.length - 1] = (last.lines[last.lines.length - 1] + (/^[.,;:!?)\]]/.test(line.trim()) ? "" : " ") + line.trim());
+      else if (last?.kind === "p") last.lines.push(line);
+      else blocks.push({ kind: "p", lines: [line] });
+    }
   }
   return <div className="space-y-2.5 text-[14px] leading-[1.65] text-ink/90">{blocks.filter((b) => b.lines.length).map((b, i) =>
     b.kind === "ul" ? <ul key={i} className="space-y-1.5 pl-1">{b.lines.map((l, j) => <li key={j} className="flex gap-2"><span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-accent/70" /><span><Inline text={l} sources={sources} /></span></li>)}</ul>
@@ -153,6 +168,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
   const [inspectorOpen, setInspectorOpen] = useState(full);
   const [inspect, setInspect] = useState<number | null>(null);
   const [health, setHealth] = useState<{ ok: boolean; documents?: number; collections?: Record<string, number> } | null>(null);
+  const [quota, setQuota] = useState<Quota>({ limit: null, remaining: null });
   const [copied, setCopied] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -160,6 +176,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
     try { const v = localStorage.getItem("ask.opts"); if (v) setOpts({ ...DEFAULT_OPTS, ...JSON.parse(v) }); } catch {}
     fetch(`${API}/suggestions`).then((r) => r.json()).then((d) => setSugg(d.items ?? [])).catch(() => {});
     fetch(`${API}/health`).then((r) => r.json()).then((d) => setHealth({ ok: !!d.ok, documents: d.documents, collections: d.collections })).catch(() => setHealth({ ok: false }));
+    fetch(`${API}/quota`, { headers: { "X-Client-Id": clientId() } }).then((r) => r.json()).then((d) => setQuota({ limit: d.limit ?? null, remaining: d.remaining ?? null })).catch(() => {});
   }, []);
   useEffect(() => { try { localStorage.setItem("ask.opts", JSON.stringify(opts)); } catch {} }, [opts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [msgs]);
@@ -180,16 +197,20 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       if (opts.pipeline) body.pipeline = opts.pipeline;
       if (opts.expand != null) body.expand = opts.expand;
       if (opts.rerank != null) body.rerank = opts.rerank;
-      const res = await fetch(`${API}/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-      if (!res.ok || !res.body) { patchLast((m) => ({ ...m, pending: false, live: false, error: res.status === 429 ? "Too many questions for now — try again in a minute." : `The assistant is unavailable (${res.status}).` })); return; }
+      const res = await fetch(`${API}/chat`, { method: "POST", headers: { "content-type": "application/json", "X-Client-Id": clientId() }, body: JSON.stringify(body) });
+      if (!res.ok || !res.body) {
+        let why = `The assistant is unavailable (${res.status}).`;
+        if (res.status === 429) { try { why = (await res.json()).detail ?? why; } catch {} if (/used today/i.test(why)) setQuota((q) => ({ ...q, remaining: 0 })); }
+        patchLast((m) => ({ ...m, pending: false, live: false, error: why })); return;
+      }
       for await (const { event, data } of sse(res)) {
         const d = JSON.parse(data);
         if (event === "step") patchLast((m) => ({ ...m, trace: { ...(m.trace ?? { steps: [] }), steps: [...(m.trace?.steps ?? []), d as Step] } }));
         else if (event === "sources") patchLast((m) => ({ ...m, sources: d as Source[] }));
         else if (event === "token") patchLast((m) => ({ ...m, content: m.content + (d as string), pending: false }));
         else if (event === "trace") patchLast((m) => ({ ...m, trace: { ...(d as Trace), cached: false } }));
-        else if (event === "done") patchLast((m) => ({ ...m, live: false, trace: m.trace ? { ...m.trace, cached: !!d.cached } : m.trace }));
-        else if (event === "error") patchLast((m) => ({ ...m, pending: false, live: false, error: d.message }));
+        else if (event === "done") { if (d.remaining !== undefined) setQuota((q) => ({ ...q, remaining: d.remaining })); patchLast((m) => ({ ...m, live: false, trace: m.trace ? { ...m.trace, cached: !!d.cached } : m.trace })); }
+        else if (event === "error") { if (d.quota) setQuota((q) => ({ ...q, remaining: 0 })); patchLast((m) => ({ ...m, pending: false, live: false, error: d.message })); }
       }
     } catch { patchLast((m) => ({ ...m, pending: false, live: false, error: "Network error — the assistant could not be reached." })); }
     finally { setBusy(false); patchLast((m) => ({ ...m, pending: false, live: false })); }
@@ -206,12 +227,15 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       {/* header */}
       <div className="flex items-center justify-between border-b border-line/70 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent text-accent-ink"><Glyph k="spark" size={13} /></span>
+          <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full ring-1 ring-line">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/headshot.jpg" alt="" className="h-full w-full object-cover" />
+            <span className={`absolute bottom-0 right-0 h-2 w-2 rounded-full ring-2 ring-surface ${health?.ok ? "bg-accent" : health ? "bg-warn" : "bg-faint"}`} />
+          </span>
           <div className="leading-tight">
-            <div className="text-[13px] font-semibold text-ink">Ask about Aditya</div>
-            <div className="flex items-center gap-1.5 font-mono text-[10px] text-faint">
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${health?.ok ? "bg-accent" : health ? "bg-warn" : "bg-faint"}`} />
-              {health?.ok ? `RAG · ${health.documents ?? "—"} documents · ${health.collections?.sections ?? "—"} sections` : health ? "offline" : "connecting…"}
+            <div className="text-[13px] font-semibold text-ink">Aditya Mukhopadhyay</div>
+            <div className="font-mono text-[10px] text-faint">
+              {health?.ok ? `AI version of me · answers from my ${health.documents ?? "—"} project documents` : health ? "offline right now" : "connecting…"}
             </div>
           </div>
         </div>
@@ -224,12 +248,11 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       {showSettings && <SettingsPopover opts={opts} setOpts={setOpts} onClose={() => setShowSettings(false)} />}
 
       {/* thread */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 [overflow-wrap:anywhere]">
         {msgs.length === 0 && (
           <div className="rise">
-            <p className="max-w-md text-[14px] leading-relaxed text-muted">
-              Ask how something was built, what failed, or what a number means. Answers are retrieved from Aditya&apos;s project documents and cite their source — open the inspector to watch the retrieval run.
-            </p>
+            <p className="max-w-md text-[14px] leading-relaxed text-ink/90">Hi — I&apos;m Aditya. Well, an AI version of me, answering from my own project documents.</p>
+            <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-muted">Ask me how I built something, what went wrong, what a number means, or whether I know a tool. Every answer cites the document it came from, and the inspector shows exactly how it was retrieved.</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {(moreSugg ? sugg : firstSugg).map((s, i) => (
                 <button key={s.q} type="button" onClick={() => ask(s.q)} style={{ animationDelay: `${60 + i * 40}ms` }}
@@ -250,7 +273,8 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
               <div className="flex justify-end"><div className="max-w-[85%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-[14px] leading-relaxed text-accent-ink">{m.content}</div></div>
             ) : (
               <div className="flex gap-2.5">
-                <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft text-accent"><Glyph k="spark" size={11} /></span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/headshot.jpg" alt="" className="mt-1 h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-line" />
                 <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line/70 bg-surface px-4 py-3">
                   {m.error ? <p className="text-[13px] text-warn">{m.error}</p>
                     : m.pending && !m.content ? (
@@ -278,11 +302,16 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       {/* composer */}
       <form onSubmit={(e) => { e.preventDefault(); ask(input); }} className="px-4 pb-3 pt-1">
         <div className="flex items-center gap-1 rounded-2xl border border-line bg-bg pl-4 pr-1.5 transition-colors focus-within:border-accent/60">
-          <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={1000} disabled={busy} placeholder="Ask about a project, a decision, a number…"
+          <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={1000} disabled={busy || quota.remaining === 0}
+                 placeholder={quota.remaining === 0 ? "Daily limit reached — the suggested questions still work" : "Ask me about my work…"}
                  className="min-w-0 flex-1 bg-transparent py-3 text-[14px] text-ink outline-none placeholder:text-faint" />
-          <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="grid h-8 w-8 place-items-center rounded-xl bg-accent text-accent-ink transition-opacity disabled:opacity-30"><Glyph k="send" size={14} /></button>
+          <button type="submit" disabled={busy || !input.trim() || quota.remaining === 0} aria-label="Send" className="grid h-8 w-8 place-items-center rounded-xl bg-accent text-accent-ink transition-opacity disabled:opacity-30"><Glyph k="send" size={14} /></button>
         </div>
-        <p className="mt-2 text-center font-mono text-[10px] text-faint">hybrid retrieval · dense + BM25 · listwise rerank · Gemini</p>
+        <p className="mt-2 flex items-center justify-center gap-2 text-center font-mono text-[10px] text-faint">
+          <span>an AI version of Aditya · retrieval-augmented · cites sources</span>
+          {quota.limit != null && quota.remaining != null && <span className="group relative"><span className={quota.remaining === 0 ? "text-warn" : ""}>· {quota.remaining}/{quota.limit} live questions</span>
+            <span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 w-56 -translate-x-1/2 rounded-md border border-line bg-bg px-2 py-1.5 text-left normal-case leading-snug text-muted opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Each visitor gets {quota.limit} live questions a day to keep model costs in check. Suggested questions are served from cache and don&apos;t count.</span></span>}
+        </p>
       </form>
     </div>
   );
@@ -323,9 +352,9 @@ export function AskWidget() {
           </>} />
         </div>
       )}
-      <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Close" : "Ask about Aditya"}
+      <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Close" : "Ask Aditya"}
               className="group fixed bottom-4 right-4 z-50 flex h-12 items-center gap-2 rounded-full bg-accent pl-4 pr-5 text-[13px] font-semibold text-accent-ink shadow-lg transition-transform hover:scale-[1.03]">
-        <Glyph k={open ? "close" : "spark"} size={15} />{open ? "Close" : "Ask"}
+        <Glyph k={open ? "close" : "spark"} size={15} />{open ? "Close" : "Ask me"}
       </button>
     </>
   );
