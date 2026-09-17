@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { PipelinePanel, type Step, type Trace } from "./PipelinePanel";
+import { BookCallModal } from "./BookCall";
 
 // The RAG backend on Railway. Override with NEXT_PUBLIC_RAG_API_URL at build time.
 export const API = process.env.NEXT_PUBLIC_RAG_API_URL ?? "https://rag-api-production-5a59.up.railway.app";
@@ -51,6 +52,7 @@ const Ic = {
   spark: <path d="M8 1.5l1.5 4 4 1.5-4 1.5L8 12.5 6.5 8.5l-4-1.5 4-1.5z" />,
   bolt: <path d="M9 1.5 3 9h4l-1 5.5L13 7H9z" />,
   more: <path d="M4 6l4 4 4-4" />,
+  calendar: <><rect x="2" y="3.5" width="12" height="10.5" rx="1.5" /><path d="M2 7h12M5 2v3M11 2v3" /></>,
 };
 export function Glyph({ k, size = 15, className = "" }: { k: keyof typeof Ic; size?: number; className?: string }) {
   return <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>{Ic[k]}</svg>;
@@ -170,6 +172,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
   const [health, setHealth] = useState<{ ok: boolean; documents?: number; collections?: Record<string, number> } | null>(null);
   const [quota, setQuota] = useState<Quota>({ limit: null, remaining: null });
   const [copied, setCopied] = useState<number | null>(null);
+  const [showBook, setShowBook] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -224,6 +227,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
 
   const chat = (
     <div className="relative flex min-h-0 flex-1 flex-col">
+      {showBook && <BookCallModal onClose={() => setShowBook(false)} />}
       {/* header */}
       <div className="flex items-center justify-between border-b border-line/70 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
@@ -240,6 +244,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
           </div>
         </div>
         <div className="flex items-center gap-0.5">
+          <IconButton label="Book a call with me" active={showBook} onClick={() => setShowBook(true)}><Glyph k="calendar" /></IconButton>
           <IconButton label="Pipeline inspector" active={inspectorOpen} onClick={() => toggleInspector(!inspectorOpen)}><Glyph k="inspector" /></IconButton>
           <IconButton label="Retrieval settings" active={showSettings} onClick={() => setShowSettings((v) => !v)}><Glyph k="settings" /></IconButton>
           {extra}
@@ -253,6 +258,9 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
           <div className="rise">
             <p className="max-w-md text-[14px] leading-relaxed text-ink/90">Hi — I&apos;m Aditya. Well, an AI version of me, answering from my own project documents.</p>
             <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-muted">Ask me how I built something, what went wrong, what a number means, or whether I know a tool. Every answer cites the document it came from, and the inspector shows exactly how it was retrieved.</p>
+            <button type="button" onClick={() => setShowBook(true)} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent-soft px-3.5 py-2 text-[13px] font-medium text-accent transition-colors hover:border-accent">
+              <Glyph k="calendar" size={14} /> Interested in working together? Let&apos;s schedule a call
+            </button>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {(moreSugg ? sugg : firstSugg).map((s) => (
                 <button key={s.q} type="button" onClick={() => ask(s.q)}
