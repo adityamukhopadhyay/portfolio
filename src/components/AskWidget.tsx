@@ -144,7 +144,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       <div className="flex items-center justify-between px-4 py-2.5">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Ask about Aditya</span>
         <div className="flex items-center gap-0.5">
-          <GlyphButton label="Pipeline inspector" active={inspectorOpen} onClick={() => { setInspectorOpen((v) => { onInspectorChange?.(!v); return !v; }); }}>
+          <GlyphButton label="Pipeline inspector" active={inspectorOpen} onClick={() => { const next = !inspectorOpen; setInspectorOpen(next); onInspectorChange?.(next); }}>
             <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 12h12M3 9l3-3 3 3 4-5" /></svg>
           </GlyphButton>
           <GlyphButton label="Settings" active={showSettings} onClick={() => setShowSettings((v) => !v)}>
