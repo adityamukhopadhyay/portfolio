@@ -11,6 +11,7 @@ type Note = { t: string; note: string };
 type Job = {
   id: string; title: string; company: string; loc: string; posted: string;
   applyType: string; applyUrl?: string; url: string; score?: number;
+  board?: string; submitted?: boolean;   // derived by applications/classify.py, never hand-edited
   mailConfirmed?: { by: string; at: string; seen: string }; rulesApplied?: string[];
   variant: string; fit: string; status: string; updated: string; notes: Note[];
 };
@@ -28,7 +29,6 @@ type Revision = { syllabus: SyllabusItem[]; topics: Topic[]; rule?: string };
 type RevProgress = { topic: number; done: boolean; at: string };
 type Data = { updated: string; profile: Record<string, string>; nudges: Nudge[]; jobs: Job[]; leads?: Lead[]; rulesLedger?: Rule[]; monitoring?: Mon; revision?: Revision };
 
-const STAGES = ["awaiting-approval", "approved", "shortlisted", "applied", "interviewing", "offer", "needs_user", "held", "closed"] as const;
 const LEAD_ORDER = ["to_call", "call_back", "to_email", "called", "emailed", "replied", "no_answer", "name_only", "closed"];
 const telHref = (p: string) => "tel:" + p.replace(/[^+\d]/g, "");
 
@@ -212,6 +212,41 @@ export function PersonalTracker() {
   const [copied, setCopied] = useState(false);
   const [prog, setProg] = useState<RevProgress | null>(null);
   const [revCopied, setRevCopied] = useState(false);
+  const [q, setQ] = useState("");
+
+  // Every headline number is computed here, from the rows themselves, so the summary and the
+  // detail below can never disagree. `submitted` is the derived flag: an application that was
+  // provably sent, which is a superset of status === "applied" (a rejection or an assessment
+  // invite is also an application that went out).
+  const sum = useMemo(() => {
+    const jobs = data?.jobs ?? [];
+    const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const has = (...ss: string[]) => jobs.filter((j) => ss.includes(j.status)).length;
+    const sent = jobs.filter((j) => j.submitted);
+    const tally = new Map<string, number>();
+    for (const j of sent) tally.set(j.board || "Company site", (tally.get(j.board || "Company site") ?? 0) + 1);
+    const byBoard = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+    const restMap = new Map<string, Job[]>();
+    for (const j of jobs) if (!j.submitted) { const g = restMap.get(j.status) ?? []; g.push(j); restMap.set(j.status, g); }
+    const rest = [...restMap.entries()].sort((a, b) => b[1].length - a[1].length);
+    return {
+      sent, rest, tracked: jobs.length, submitted: sent.length, byBoard,
+      companies: new Set(sent.map((j) => norm(j.company))).size,
+      filtered: has("skipped", "skipped_years_rule", "skipped_vendor_conflict", "held", "held_years_rule"),
+      rejected: has("rejected"),
+      engaged: has("application_viewed", "resume_viewed", "contacted_by_recruiter", "recruiter_message_available", "tracked_offsite"),
+      live: has("assessment_required", "action_required", "assignment_built_pr_pending", "workday_task_pending"),
+      talking: has("recruiter_reply_needed", "outreach_sent"),
+      needsYou: has("needs_user", "in_progress_user", "portal_account_needed", "login_link_handed", "otp_window_missed", "blocked_retry", "failed"),
+    };
+  }, [data]);
+
+  const hits = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return [];
+    return (data?.jobs ?? []).filter((j) =>
+      (j.company + " " + j.title + " " + (j.board ?? "") + " " + j.status + " " + j.loc).toLowerCase().includes(t));
+  }, [q, data]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -307,7 +342,46 @@ export function PersonalTracker() {
       </div>
     );
 
-  const byStage = (s: string) => data.jobs.filter((j) => j.status === s);
+  // One row renderer, shared by the board groups, the not-sent groups and the search results,
+  // so a job looks and behaves the same wherever it is reached from.
+  const row = (j: Job) => (
+    <details key={j.id} className="group px-5 py-4">
+      <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 [&::-webkit-details-marker]:hidden">
+        <span className="text-[15px] font-semibold text-ink">{j.title}</span>
+        <span className="text-[13px] text-muted">{j.company}{j.loc ? ` · ${j.loc}` : ""}</span>
+        <span className="ml-auto flex items-center gap-3 font-mono text-[10.5px] text-faint">
+          {j.board ? <span className="rounded-full border border-line px-2 py-0.5">{j.board}</span> : null}
+          {j.mailConfirmed ? <span className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-accent">✉ confirmed {j.mailConfirmed.at}</span> : null}
+          <span className="text-faint transition-transform group-open:rotate-45">+</span>
+        </span>
+      </summary>
+      <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-muted">
+        <div className="flex flex-wrap items-center gap-2">
+          {(["approve", "hold", "skip"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={(e) => { e.preventDefault(); decide(j.id, v); }}
+              className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors ${dec[j.id] === v ? "border-accent bg-accent text-accent-ink" : "border-line text-muted hover:border-rule hover:text-ink"}`}
+            >
+              {v}
+            </button>
+          ))}
+          <span className="font-mono text-[10.5px] text-faint">status {j.status.replace(/_/g, " ")} · {j.applyType || "—"} · {j.variant}</span>
+        </div>
+        {j.fit ? <p><span className="text-ink">Why:</span> {j.fit}</p> : null}
+        <p>
+          {j.url ? <a className="text-accent underline decoration-accent/40 underline-offset-2" href={j.url} target="_blank" rel="noreferrer">posting ↗</a> : null}
+          {j.applyUrl && j.applyUrl !== j.url ? <> · <a className="text-accent underline decoration-accent/40 underline-offset-2" href={j.applyUrl} target="_blank" rel="noreferrer">apply link ↗</a></> : null}
+          {j.posted ? <> · posted {j.posted}</> : null} · match score {j.score ?? "—"}
+        </p>
+        <ul className="space-y-1 border-l border-line pl-3">
+          {j.notes.map((n, i) => (
+            <li key={i}><span className="font-mono text-[10.5px] text-faint">{new Date(n.t).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span> — {n.note}</li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  );
   const rev = data.revision;
   const curTopic = rev?.topics.find((t) => t.status === "current") ?? (rev?.topics.length ? rev.topics[rev.topics.length - 1] : undefined);
   const doneTopics = rev && curTopic ? rev.topics.filter((t) => t !== curTopic && (t.status === "done" || t.n < curTopic.n)).sort((a, b) => b.n - a.n) : [];
@@ -326,6 +400,41 @@ export function PersonalTracker() {
       <p className="mt-1 text-[13px] text-muted">
         {data.profile.mode} · notice: {data.profile.notice} · CTC when forced: {data.profile.ctcWhenForced}. Updated automatically by Claude sessions; this page always serves the last deployed state.
       </p>
+
+      {/* ---- at a glance: the whole search in one screen, no scrolling required ---- */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { n: sum.submitted, l: "applications sent", s: `across ${sum.companies} companies` },
+          { n: sum.byBoard.length, l: "boards & ATS", s: sum.byBoard.slice(0, 3).map(([b]) => b).join(" · ") },
+          { n: sum.engaged + sum.live + sum.rejected, l: "employer responses", s: `${sum.live} live · ${sum.engaged} viewed · ${sum.rejected} closed out` },
+          { n: sum.needsYou, l: "waiting on you", s: sum.talking ? `${sum.talking} recruiter threads open` : "nothing blocked" },
+        ].map((k) => (
+          <div key={k.l} className="rounded-xl border border-line bg-surface px-5 py-4">
+            <div className="text-[30px] font-extrabold leading-none tracking-tight text-ink tabular-nums">{k.n}</div>
+            <div className="mt-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted">{k.l}</div>
+            <div className="mt-1 text-[12px] leading-snug text-faint">{k.s}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* where they went — the grouping that makes the spread legible at a glance */}
+      <div className="mt-3 rounded-xl border border-line bg-surface px-5 py-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-faint">Applications by board</span>
+          <span className="font-mono text-[10.5px] text-faint">{sum.tracked} roles screened · {sum.filtered} rejected by the gate · {sum.submitted} sent</span>
+        </div>
+        <div className="mt-3 grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
+          {sum.byBoard.map(([b, n]) => (
+            <div key={b} className="flex items-center gap-3">
+              <span className="w-[112px] shrink-0 truncate text-[12.5px] text-muted" title={b}>{b}</span>
+              <span className="h-[7px] flex-1 overflow-hidden rounded-full bg-line/60">
+                <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, (n / Math.max(1, sum.byBoard[0]?.[1] ?? 1)) * 100)}%` }} />
+              </span>
+              <span className="w-8 shrink-0 text-right font-mono text-[12px] tabular-nums text-ink">{n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* monitoring strip */}
       {data.monitoring ? (
@@ -481,55 +590,75 @@ export function PersonalTracker() {
         </section>
       ) : null}
 
-      {/* board */}
-      {STAGES.filter((s) => byStage(s).length).map((s) => (
-        <section key={s} className="mt-10">
-          <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-            {s.replace("-", " ")} <span className="text-faint">· {byStage(s).length}</span>
-          </h2>
-          <div className="divide-y divide-line rounded-xl border border-line bg-surface">
-            {byStage(s).map((j) => (
-              <details key={j.id} className="group px-5 py-4">
-                <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 [&::-webkit-details-marker]:hidden">
-                  <span className="text-[15px] font-semibold text-ink">{j.title}</span>
-                  <span className="text-[13px] text-muted">{j.company} · {j.loc}</span>
-                  <span className="ml-auto flex items-center gap-3 font-mono text-[10.5px] text-faint">
-                    <span>{j.applyType}</span>
-                    {j.mailConfirmed ? <span className="rounded-full border border-accent/40 bg-accent-soft px-2 py-0.5 text-accent">✉ confirmed {j.mailConfirmed.at}</span> : null}
-                    <span className="rounded-full border border-line px-2 py-0.5">{j.variant}</span>
-                    <span className="text-faint transition-transform group-open:rotate-45">+</span>
-                  </span>
-                </summary>
-                <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-muted">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(["approve", "hold", "skip"] as const).map((v) => (
-                      <button
-                        key={v}
-                        onClick={(e) => { e.preventDefault(); decide(j.id, v); }}
-                        className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors ${dec[j.id] === v ? "border-accent bg-accent text-accent-ink" : "border-line text-muted hover:border-rule hover:text-ink"}`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                    <span className="font-mono text-[10.5px] text-faint">decisions save on this device; copy below to send to Claude</span>
+      {/* ---- detail: collapsed by default. The dashboard above is the page; this is the drill-down. ---- */}
+      <div className="mt-10 flex flex-wrap items-center gap-3">
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">Detail</h2>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={`Search ${sum.tracked} roles — company, title, board, status`}
+          className="min-w-[240px] flex-1 rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] text-ink outline-none placeholder:text-faint focus:border-accent/60"
+        />
+        {q ? (
+          <span className="font-mono text-[11px] text-faint">
+            {hits.length} match{hits.length === 1 ? "" : "es"}
+            <button onClick={() => setQ("")} className="ml-2 underline hover:text-ink">clear</button>
+          </span>
+        ) : null}
+      </div>
+
+      {q ? (
+        <div className="mt-3 divide-y divide-line rounded-xl border border-line bg-surface">
+          {hits.slice(0, 80).map(row)}
+          {hits.length > 80 ? <p className="px-5 py-3 font-mono text-[11px] text-faint">showing the first 80 of {hits.length} — narrow the search</p> : null}
+          {!hits.length ? <p className="px-5 py-4 text-[13px] text-muted">Nothing matches “{q}”.</p> : null}
+        </div>
+      ) : (
+        <>
+          <details className="mt-3 rounded-xl border border-line bg-surface">
+            <summary className="flex cursor-pointer list-none items-baseline gap-3 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+              <span className="text-[14px] font-semibold text-ink">Applications sent</span>
+              <span className="font-mono text-[11px] text-faint">{sum.submitted} across {sum.byBoard.length} boards · grouped by where it went</span>
+              <span className="ml-auto text-faint">+</span>
+            </summary>
+            <div className="border-t border-line px-3 pb-3">
+              {sum.byBoard.map(([b, n]) => (
+                <details key={b} className="mt-2 rounded-lg border border-line/70">
+                  <summary className="flex cursor-pointer list-none items-baseline gap-3 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                    <span className="text-[13px] font-semibold text-ink">{b}</span>
+                    <span className="font-mono text-[11px] text-faint">{n}</span>
+                    <span className="ml-auto text-faint">+</span>
+                  </summary>
+                  <div className="divide-y divide-line border-t border-line">
+                    {sum.sent.filter((j) => (j.board || "Company site") === b).map(row)}
                   </div>
-                  <p><span className="text-ink">Why:</span> {j.fit}</p>
-                  <p>
-                    <a className="text-accent underline decoration-accent/40 underline-offset-2" href={j.url} target="_blank" rel="noreferrer">posting ↗</a>
-                    {j.applyUrl ? <> · <a className="text-accent underline decoration-accent/40 underline-offset-2" href={j.applyUrl} target="_blank" rel="noreferrer">apply link ↗</a></> : null}
-                    {" "}· posted {j.posted} · match score {j.score ?? "—"}
-                  </p>
-                  <ul className="space-y-1 border-l border-line pl-3">
-                    {j.notes.map((n, i) => (
-                      <li key={i}><span className="font-mono text-[10.5px] text-faint">{new Date(n.t).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span> — {n.note}</li>
-                    ))}
-                  </ul>
-                </div>
-              </details>
-            ))}
-          </div>
-        </section>
-      ))}
+                </details>
+              ))}
+            </div>
+          </details>
+
+          <details className="mt-3 rounded-xl border border-line bg-surface">
+            <summary className="flex cursor-pointer list-none items-baseline gap-3 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+              <span className="text-[14px] font-semibold text-ink">Not sent</span>
+              <span className="font-mono text-[11px] text-faint">{sum.tracked - sum.submitted} · what the gate rejected, what is blocked, what is waiting on you</span>
+              <span className="ml-auto text-faint">+</span>
+            </summary>
+            <div className="border-t border-line px-3 pb-3">
+              {sum.rest.map(([st, group]) => (
+                <details key={st} className="mt-2 rounded-lg border border-line/70">
+                  <summary className="flex cursor-pointer list-none items-baseline gap-3 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                    <span className="text-[13px] font-semibold text-ink">{st.replace(/_/g, " ")}</span>
+                    <span className="font-mono text-[11px] text-faint">{group.length}</span>
+                    <span className="ml-auto text-faint">+</span>
+                  </summary>
+                  <div className="divide-y divide-line border-t border-line">{group.map(row)}</div>
+                </details>
+              ))}
+            </div>
+          </details>
+        </>
+      )}
+
       {Object.keys(dec).length ? (
         <div className="fixed inset-x-0 bottom-4 z-40 mx-auto w-fit rounded-full border border-line bg-surface px-4 py-2 shadow-2xl">
           <span className="mr-3 font-mono text-[11.5px] text-muted">{Object.keys(dec).length} decision{Object.keys(dec).length > 1 ? "s" : ""}</span>
