@@ -229,7 +229,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
         <div className="flex items-center gap-2.5">
           <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full ring-1 ring-line">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/headshot.jpg" alt="" className="h-full w-full object-cover" />
+            <img src="/avatar.jpg" alt="" className="h-full w-full object-cover" />
             <span className={`absolute bottom-0 right-0 h-2 w-2 rounded-full ring-2 ring-surface ${health?.ok ? "bg-accent" : health ? "bg-warn" : "bg-faint"}`} />
           </span>
           <div className="leading-tight">
@@ -274,7 +274,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
             ) : (
               <div className="flex gap-2.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/headshot.jpg" alt="" className="mt-1 h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-line" />
+                <img src="/avatar.jpg" alt="" className="mt-1 h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-line" />
                 <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line/70 bg-surface px-4 py-3">
                   {m.error ? <p className="text-[13px] text-warn">{m.error}</p>
                     : m.pending && !m.content ? (
