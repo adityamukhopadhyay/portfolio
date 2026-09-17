@@ -4,7 +4,20 @@ import { useEffect, useMemo, useState } from "react";
 import { API, Glyph, IconButton } from "./AskWidget";
 
 type Slots = { duration_min: number; ist_hours: string[]; days_ahead: number; to: string };
-type Done = { when: { local: string; ist: string; day: string; tz: string }; calendar_url: string; delivered: boolean; message: string };
+type Done = { when: { local: string; ist: string; day: string; tz: string; utc_start: string; utc_end: string }; calendar_url: string; delivered: boolean; message: string; to: string };
+
+/** Universal invite (.ics) for Outlook / Apple Calendar: the visitor is the organiser, Aditya the attendee. */
+function icsDataUrl(d: Done, name: string, email: string, note: string): string {
+  const esc = (t: string) => t.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  const uid = `${d.when.utc_start}-${Math.random().toString(36).slice(2)}@adityamukhopadhyay.vercel.app`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ask-about-Aditya//booking//EN", "METHOD:REQUEST", "BEGIN:VEVENT",
+    `UID:${uid}`, `DTSTAMP:${stamp}`, `DTSTART:${d.when.utc_start}`, `DTEND:${d.when.utc_end}`,
+    `SUMMARY:${esc(`Call: ${name} × Aditya Mukhopadhyay`)}`, `DESCRIPTION:${esc(note || "Intro call booked via adityamukhopadhyay.vercel.app/ask")}`,
+    `ORGANIZER;CN=${esc(name)}:mailto:${email}`, `ATTENDEE;CN=Aditya Mukhopadhyay;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:${d.to}`,
+    `ATTENDEE;CN=${esc(name)};ROLE=REQ-PARTICIPANT:mailto:${email}`, "END:VEVENT", "END:VCALENDAR"];
+  return "data:text/calendar;charset=utf-8," + encodeURIComponent(lines.join("\r\n"));
+}
 
 function clientId(): string {
   try { let v = localStorage.getItem("ask.cid"); if (!v) { v = crypto.randomUUID(); localStorage.setItem("ask.cid", v); } return v; } catch { return "anon"; }
@@ -72,8 +85,10 @@ export function BookCallModal({ onClose }: { onClose: () => void }) {
                 <div className="text-[15px] font-semibold text-ink">{done.delivered ? "Booked. I'll confirm by email." : "Request received."}</div>
                 <div className="mt-1 text-[13.5px] text-muted">{done.when.local} <span className="text-faint">({done.when.tz})</span>{done.when.tz !== "Asia/Kolkata" && <> · {done.when.ist}</>}</div>
                 {!done.delivered && <div className="mt-1 text-[12.5px] text-faint">{done.message}</div>}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 text-[12.5px] text-muted">One more step: put it on your calendar — that sends me the invite from your account, and we both get the reminder.</div>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <a href={done.calendar_url} target="_blank" rel="noreferrer" className="rounded-xl bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-ink">Add to Google Calendar</a>
+                  <a href={icsDataUrl(done, name, email, note)} download={`call-with-aditya-${date}.ics`} className="rounded-xl border border-line px-3.5 py-2 text-[13px] text-muted hover:text-ink">Download .ics (Outlook / Apple)</a>
                   <button onClick={onClose} className="rounded-xl border border-line px-3.5 py-2 text-[13px] text-muted hover:text-ink">Done</button>
                 </div>
               </div>
