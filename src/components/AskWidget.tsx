@@ -16,28 +16,37 @@ async function* sse(res: Response) {
   const reader = res.body!.getReader();
   const dec = new TextDecoder();
   let buf = "";
+  const parse = (block: string) => {
+    let event = "message", data = "";
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event:")) event = line.slice(6).trim();
+      else if (line.startsWith("data:")) data += line.slice(5).trim();
+    }
+    return data ? { event, data } : null;
+  };
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
-    buf += dec.decode(value, { stream: true });
+    // sse-starlette emits CRLF line endings; normalise before splitting on blank lines
+    buf += dec.decode(value, { stream: true }).replace(/\r\n/g, "\n");
     let idx;
     while ((idx = buf.indexOf("\n\n")) >= 0) {
-      const block = buf.slice(0, idx); buf = buf.slice(idx + 2);
-      let event = "message", data = "";
-      for (const line of block.split("\n")) {
-        if (line.startsWith("event:")) event = line.slice(6).trim();
-        else if (line.startsWith("data:")) data += line.slice(5).trim();
-      }
-      if (data) yield { event, data };
+      const ev = parse(buf.slice(0, idx)); buf = buf.slice(idx + 2);
+      if (ev) yield ev;
     }
   }
+  const tail = parse(buf.replace(/\r\n/g, "\n"));
+  if (tail) yield tail;
 }
 
-function Answer({ text, sources }: { text: string; sources?: Source[] }) {
-  const parts = text.split(/(\[\d+\](?:\[\d+\])*)/g);
+/** Inline: **bold**, `code`, and [n] citation chips. */
+function Inline({ text, sources }: { text: string; sources?: Source[] }) {
+  const parts = text.split(/(\[\d+\](?:\[\d+\])*|\*\*[^*]+\*\*|`[^`]+`)/g);
   return (
-    <div className="whitespace-pre-wrap leading-relaxed">
+    <>
       {parts.map((p, i) => {
+        if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i} className="font-semibold text-ink">{p.slice(2, -2)}</strong>;
+        if (/^`[^`]+`$/.test(p)) return <code key={i} className="rounded bg-surface-2 px-1 font-mono text-[12px]">{p.slice(1, -1)}</code>;
         if (!/^\[\d+\]/.test(p)) return <span key={i}>{p}</span>;
         const ns = [...p.matchAll(/\[(\d+)\]/g)].map((x) => Number(x[1]));
         return ns.map((n, j) => {
@@ -47,6 +56,32 @@ function Answer({ text, sources }: { text: string; sources?: Source[] }) {
           return href ? <a key={`${i}-${j}`} href={href} target="_blank" rel="noreferrer">{chip}</a> : chip;
         });
       })}
+    </>
+  );
+}
+
+/** Block-level: paragraphs and bullet lists (the answer prompt allows compact lists). */
+function Answer({ text, sources }: { text: string; sources?: Source[] }) {
+  const blocks: { kind: "p" | "ul"; lines: string[] }[] = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.trimEnd();
+    const m = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (m) {
+      if (blocks.length && blocks[blocks.length - 1].kind === "ul") blocks[blocks.length - 1].lines.push(m[1]);
+      else blocks.push({ kind: "ul", lines: [m[1]] });
+    } else if (line.trim() === "") {
+      if (blocks.length && blocks[blocks.length - 1].kind === "p" && blocks[blocks.length - 1].lines.length) blocks.push({ kind: "p", lines: [] });
+    } else {
+      if (blocks.length && blocks[blocks.length - 1].kind === "p") blocks[blocks.length - 1].lines.push(line);
+      else blocks.push({ kind: "p", lines: [line] });
+    }
+  }
+  return (
+    <div className="space-y-2 leading-relaxed">
+      {blocks.filter((b) => b.lines.length).map((b, i) =>
+        b.kind === "ul"
+          ? <ul key={i} className="list-disc space-y-1 pl-5">{b.lines.map((l, j) => <li key={j}><Inline text={l} sources={sources} /></li>)}</ul>
+          : <p key={i}><Inline text={b.lines.join(" ")} sources={sources} /></p>)}
     </div>
   );
 }
