@@ -4,6 +4,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { NeuralField } from "@/components/NeuralField";
 import { ScrollProgress } from "@/components/ScrollProgress";
+import { AskWidget } from "@/components/AskWidget";
 import { profile } from "@/content/profile";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="flex-1">{children}</div>
           <Footer />
         </div>
+        <AskWidget />
       </body>
     </html>
   );
