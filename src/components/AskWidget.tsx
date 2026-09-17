@@ -254,9 +254,9 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
             <p className="max-w-md text-[14px] leading-relaxed text-ink/90">Hi — I&apos;m Aditya. Well, an AI version of me, answering from my own project documents.</p>
             <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-muted">Ask me how I built something, what went wrong, what a number means, or whether I know a tool. Every answer cites the document it came from, and the inspector shows exactly how it was retrieved.</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {(moreSugg ? sugg : firstSugg).map((s, i) => (
-                <button key={s.q} type="button" onClick={() => ask(s.q)} style={{ animationDelay: `${60 + i * 40}ms` }}
-                        className="rise group flex items-start gap-2.5 rounded-xl border border-line bg-bg px-3.5 py-3 text-left transition-colors hover:border-accent/50 hover:bg-surface">
+              {(moreSugg ? sugg : firstSugg).map((s) => (
+                <button key={s.q} type="button" onClick={() => ask(s.q)}
+                        className="group flex items-start gap-2.5 rounded-xl border border-line bg-bg px-3.5 py-3 text-left transition-colors hover:border-accent/50 hover:bg-surface">
                   <span className="mt-[3px] text-faint transition-colors group-hover:text-accent"><Glyph k={s.cached ? "bolt" : "spark"} size={12} /></span>
                   <span className="text-[13px] leading-snug text-ink/85 group-hover:text-ink">{s.q}</span>
                 </button>))}
