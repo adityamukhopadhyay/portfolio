@@ -23,24 +23,26 @@ const I = {
   prompt: <><path d="M3 3h10v10H3z" /><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3" /></>,
   generate: <path d="M8 2l1.2 3.3L12.5 6.5 9.2 7.8 8 11 6.8 7.8 3.5 6.5l3.3-1.2z" />,
   rewrite: <path d="M3 13l1-3.5L11 2.5l2.5 2.5L6.5 12z" />,
+  persona: <><circle cx="8" cy="5.5" r="2.5" /><path d="M3 14c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5" /></>,
   dot: <circle cx="8" cy="8" r="2" />,
 };
 function Icon({ k, className = "" }: { k: keyof typeof I; className?: string }) {
   return <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>{I[k]}</svg>;
 }
 const ICON: Record<string, keyof typeof I> = {
-  guard: "shield", followup_rewrite: "rewrite", cache: "cache", query_expansion: "expand", embed_query: "vector", dense_search: "dense",
+  guard: "shield", followup_rewrite: "rewrite", persona_rewrite: "persona", cache: "cache", query_expansion: "expand", embed_query: "vector", dense_search: "dense",
   sparse_search: "sparse", rrf_fusion: "fuse", multi_query_fusion: "fuse", group_by_parent: "group", fetch_parents: "fetch",
   rerank: "rerank", build_prompt: "prompt", generate: "generate",
 };
 const LABEL: Record<string, string> = {
-  guard: "Guard", followup_rewrite: "Rewrite follow-up", cache: "Cache", query_expansion: "Expand query", embed_query: "Embed",
+  guard: "Guard", followup_rewrite: "Rewrite follow-up", persona_rewrite: "You → Aditya", cache: "Cache", query_expansion: "Expand query", embed_query: "Embed",
   dense_search: "Dense search", sparse_search: "Sparse search", rrf_fusion: "Fuse (RRF)", multi_query_fusion: "Fuse queries",
   group_by_parent: "Group by section", fetch_parents: "Fetch sections", rerank: "Rerank", build_prompt: "Prompt", generate: "Generate",
 };
 const DESC: Record<string, string> = {
   guard: "Normalise, cap length, flag injection and PII patterns.",
   followup_rewrite: "The question referenced earlier turns; the light model rewrote it to stand alone.",
+  persona_rewrite: "Visitors say \"you\"; the documents say \"Aditya\". A deterministic rewrite for the search query only — the answer still sees the original wording.",
   cache: "Answers are cached on the normalised question. Pre-drafted questions are pinned with their trace.",
   query_expansion: "Two alternative phrasings from the light model; each is searched, results are fused.",
   embed_query: "Gemini embedding, RETRIEVAL_QUERY, 768-d, unit-normalised.",
@@ -97,7 +99,7 @@ function Body({ s }: { s: Step }) {
   const d = s.data as Record<string, any>;
   switch (s.name) {
     case "guard": return <Meta items={{ chars: d.chars, injection: d.injection ? "flagged" : "no", pii: d.pii_ask ? "flagged" : "no" }} />;
-    case "followup_rewrite": return <div className="space-y-0.5 text-[11.5px]"><div className="text-faint">{d.from}</div><div className="text-ink">→ {d.to}</div></div>;
+    case "persona_rewrite": case "followup_rewrite": return <div className="space-y-0.5 text-[11.5px]"><div className="text-faint">{d.from}</div><div className="text-ink">→ {d.to}</div></div>;
     case "cache": return <Meta items={{ result: d.hit ? (d.precomputed ? "hit · pre-computed" : "hit") : "miss" }} />;
     case "query_expansion": return <ol className="space-y-0.5 text-[11.5px]">{(d.queries ?? []).map((q: string, i: number) => <li key={i} className={i ? "text-ink" : "text-faint"}>{q}</li>)}</ol>;
     case "embed_query": return <Meta items={{ model: d.model, dim: d.dim, queries: d.n }} />;
@@ -172,7 +174,7 @@ export function PipelinePanel({ trace, live, onClose }: { trace: Trace | null; l
                     <button onClick={() => setOpen((o) => ({ ...o, [i]: !isOpen }))} className="flex w-full items-center gap-2.5 py-2 text-left">
                       <Icon k={ICON[s.name] ?? "dot"} className={isOpen ? "text-accent" : "text-faint"} />
                       <span className="flex-1 text-ink">{LABEL[s.name] ?? s.name}</span>
-                      {s.pending ? <span className="font-mono text-[10.5px] text-warn">…</span> : <span className="font-mono text-[10.5px] text-faint">{ms(s.ms)}</span>}
+                      {s.pending ? <span className="font-mono text-[10.5px] text-warn">…</span> : (s.data as any)?.skipped ? <span className="font-mono text-[10.5px] text-faint">off</span> : <span className="font-mono text-[10.5px] text-faint">{ms(s.ms)}</span>}
                       <span className={`text-[10px] text-faint transition-transform ${isOpen ? "rotate-90" : ""}`}>›</span>
                     </button>
                     {isOpen && <div className="pb-3 pl-6"><p className="mb-1.5 text-[11px] text-faint">{DESC[s.name]}</p><Body s={s} /></div>}
