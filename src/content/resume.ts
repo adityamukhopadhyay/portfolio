@@ -36,7 +36,6 @@ export const resume = {
       { head: "Leadership", body: "Managed a 3-person AI team · worked directly with stakeholders · client-facing delivery" },
     ],
     projects: [
-,
     ],
   },
 
