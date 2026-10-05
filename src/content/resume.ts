@@ -31,8 +31,8 @@ export const resume = {
       { head: "GitHub", body: "github.com/adityamukhopadhyay", href: "https://github.com/adityamukhopadhyay/" },
     ],
     skills: [
-      { head: "Languages & Backend", body: "Python (pandas, NumPy, scikit-learn) · TypeScript · SQL · FastAPI · REST APIs · GraphQL (Hasura) · PostgreSQL (JSONB, pgvector, pg_trgm) · Supabase · Docker · AWS (Lambda, EC2, S3) · Railway · Vercel · Git · CI/CD" },
-      { head: "AI / ML", body: "Machine Learning · LLM agents · Claude Agent SDK · Model Context Protocol (MCP) · multi-agent orchestration · tool calling · RAG · vector search (FAISS, pgvector) · embeddings (MiniLM, nomic-embed) · semantic search · clustering (HDBSCAN, K-Means) · entity resolution · prompt engineering · structured outputs · evaluation & guardrails · observability & cost tracing · NLP · deep learning (CNNs) · Anthropic Claude, OpenAI GPT and Google Gemini APIs · n8n" },
+      { head: "Languages & Backend", body: "Python (pandas, NumPy, scikit-learn) · SQL · FastAPI · REST APIs · GraphQL (Hasura) · PostgreSQL · Supabase · Docker · AWS (Lambda, EC2, S3) · Git" },
+      { head: "AI / ML", body: "Machine Learning · LLM agents · Claude Agent SDK · Model Context Protocol (MCP) · multi-agent orchestration · tool calling · RAG · vector search (FAISS) · embeddings · semantic search · clustering (HDBSCAN, K-Means) · prompt engineering · evaluation & guardrails · cost tracing · NLP · deep learning (CNNs) · Anthropic Claude, OpenAI GPT and Google Gemini APIs · n8n" },
       { head: "Leadership", body: "Managed a 3-person AI team · worked directly with stakeholders · client-facing delivery" },
     ],
     projects: [
@@ -40,7 +40,7 @@ export const resume = {
   },
 
   summary:
-    "AI Engineer who ships production large language model (LLM) agent systems end to end — multi-agent orchestration on the Claude Agent SDK, MCP tool servers, retrieval-augmented generation (RAG) and vector search, evaluation and guardrails, and classical ML — in Python, TypeScript, FastAPI and PostgreSQL on AWS.",
+    "AI Engineer who ships production large language model (LLM) agent systems end to end — multi-agent orchestration on the Claude Agent SDK, MCP tool servers, retrieval-augmented generation (RAG) and vector search, evaluation and guardrails, and classical ML — in Python, FastAPI and PostgreSQL on AWS.",
 
   roles: [
     {
@@ -51,7 +51,7 @@ export const resume = {
         { kind: "leaf", text: "Delivery failures surfaced only when a human noticed a stuck rider." },
         { kind: "leaf", text: "Architected a **per-rider orchestrator agent (~20 concurrent)** that delegates to messaging, escalation, judgement and route-planning sub-agents over one in-process MCP server, with **deterministic guards below the model**." },
         { kind: "leaf", text: "Runs **unattended 13-hour shifts** in production, backed by **23 offline test suites** and an \"Ask the fleet\" agent for operators." },
-        { kind: "sub", text: "WhatsApp AI Sales Agent on Buyer MCP — conversational agent + the buyer app as 100 typed tools (Claude Agent SDK, MCP, Python, TypeScript, Hasura GraphQL, OAuth/JWT)" },
+        { kind: "sub", text: "WhatsApp AI Sales Agent on Buyer MCP — conversational agent + the buyer app as 100 typed tools (Claude Agent SDK, MCP, Python, Hasura GraphQL, OAuth/JWT)" },
         { kind: "leaf", text: "Retailers asked questions and abandoned carts faster than a sales team could respond, and agents had no safe, permissioned way to act inside the buyer app." },
         { kind: "leaf", text: "Built an MCP server exposing search, carts, coupons, orders, wallet and tickets as **100 typed tools** behind phone-OTP OAuth and **per-buyer JWTs**, and on it a two-model agent: a tool-using worker plus a **tool-less reply agent with a claim verifier**, per-buyer queues and a bounded concurrency gate." },
         { kind: "leaf", text: "Handles buyer conversations end to end in production and influenced **475 orders (INR 5.0 lakh)**; the same MCP powers Claude Desktop and Claude Code, with the tool schema as the permission boundary." },
