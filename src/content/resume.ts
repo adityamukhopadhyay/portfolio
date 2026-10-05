@@ -35,8 +35,7 @@ export const resume = {
       { head: "AI / ML", body: "Machine Learning · LLM agents · Claude Agent SDK · Model Context Protocol (MCP) · multi-agent orchestration · tool calling · RAG · vector search (FAISS) · embeddings · semantic search · clustering (HDBSCAN, K-Means) · prompt engineering · evaluation & guardrails · cost tracing · NLP · deep learning (CNNs) · Anthropic Claude, OpenAI GPT and Google Gemini APIs · n8n" },
       { head: "Leadership", body: "Managed a 3-person AI team · worked directly with stakeholders · client-facing delivery" },
     ],
-    projects: [
-    ],
+    projects: [] as { head: string; meta: string; body: string }[],
   },
 
   summary:
