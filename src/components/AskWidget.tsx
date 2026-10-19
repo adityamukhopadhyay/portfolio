@@ -5,6 +5,24 @@ import { PipelinePanel, type Step, type Trace } from "./PipelinePanel";
 import { BookCallModal } from "./BookCall";
 import { WhoCard, WhoPopover, useWho, type Who } from "./WhoAsked";
 
+const DOWN = "__backend_down__";
+
+const DONATE_URL = process.env.NEXT_PUBLIC_DONATE_URL;
+
+function DownNote({ onBook }: { onBook: () => void }) {
+  return (
+    <div className="max-w-md rounded-xl border border-warn/40 bg-bg px-3.5 py-3 text-[13px] leading-relaxed">
+      <p className="text-ink/90">🔌 The AI version of me is taking a nap — its server ran out of free credits. Turns out GPUs don&apos;t accept &ldquo;exposure&rdquo; as payment.</p>
+      <p className="mt-1.5 text-muted">{DONATE_URL ? "Buy my server a coffee and it'll be back on its feet ☕ — or skip the bot and talk to the real me (I run on chai, no credits needed)." : "Skip the bot and talk to the real me — I run on chai, no credits needed ☕"}</p>
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        {DONATE_URL && <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent-soft px-3 py-1.5 text-[12.5px] font-medium text-accent transition-colors hover:border-accent">☕ Buy my server a coffee</a>}
+        <button type="button" onClick={onBook} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12.5px] text-ink/85 transition-colors hover:border-accent/50">📅 Talk to the real me</button>
+        <a href="mailto:adul.m.2003@gmail.com?subject=Your%20bot%20is%20napping" className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12.5px] text-ink/85 transition-colors hover:border-accent/50">✉️ Email me</a>
+      </div>
+    </div>
+  );
+}
+
 // The RAG backend on Railway. Override with NEXT_PUBLIC_RAG_API_URL at build time.
 export const API = process.env.NEXT_PUBLIC_RAG_API_URL ?? "https://rag-api-production-5a59.up.railway.app";
 
@@ -208,7 +226,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
       if (opts.rerank != null) body.rerank = opts.rerank;
       const res = await fetch(`${API}/chat`, { method: "POST", headers: { "content-type": "application/json", "X-Client-Id": clientId() }, body: JSON.stringify(body) });
       if (!res.ok || !res.body) {
-        let why = `The assistant is unavailable (${res.status}).`;
+        let why = DOWN;
         if (res.status === 429) { try { why = (await res.json()).detail ?? why; } catch {} if (/used today/i.test(why)) setQuota((q) => ({ ...q, remaining: 0 })); }
         patchLast((m) => ({ ...m, pending: false, live: false, error: why })); return;
       }
@@ -221,7 +239,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
         else if (event === "done") { if (d.remaining !== undefined) setQuota((q) => ({ ...q, remaining: d.remaining })); patchLast((m) => ({ ...m, live: false, trace: m.trace ? { ...m.trace, cached: !!d.cached } : m.trace })); }
         else if (event === "error") { if (d.quota) setQuota((q) => ({ ...q, remaining: 0 })); patchLast((m) => ({ ...m, pending: false, live: false, error: d.message })); }
       }
-    } catch { patchLast((m) => ({ ...m, pending: false, live: false, error: "Network error — the assistant could not be reached." })); }
+    } catch { patchLast((m) => ({ ...m, pending: false, live: false, error: DOWN })); }
     finally { setBusy(false); patchLast((m) => ({ ...m, pending: false, live: false })); }
   }, [busy, msgs, opts]);
 
@@ -269,6 +287,7 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
             <button type="button" onClick={() => setShowBook(true)} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent-soft px-3.5 py-2 text-[13px] font-medium text-accent transition-colors hover:border-accent">
               <Glyph k="calendar" size={14} /> Interested in working together? Let&apos;s schedule a call
             </button>
+            {health && !health.ok && <div className="mt-4"><DownNote onBook={() => setShowBook(true)} /></div>}
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {(moreSugg ? sugg : firstSugg).map((s) => (
                 <button key={s.q} type="button" onClick={() => ask(s.q)}
@@ -292,7 +311,8 @@ export function AskPanel({ full = false, extra, onInspectorChange }: { full?: bo
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/avatar.jpg" alt="" className="mt-1 h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-line" />
                 <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line/70 bg-surface px-4 py-3">
-                  {m.error ? <p className="text-[13px] text-warn">{m.error}</p>
+                  {m.error === DOWN ? <DownNote onBook={() => setShowBook(true)} />
+                    : m.error ? <p className="text-[13px] text-warn">{m.error}</p>
                     : m.pending && !m.content ? (
                       <div className="flex items-center gap-2 font-mono text-[11.5px] text-faint">
                         <span className="inline-flex gap-0.5"><i className="h-1 w-1 animate-pulse rounded-full bg-accent" /><i className="h-1 w-1 animate-pulse rounded-full bg-accent [animation-delay:150ms]" /><i className="h-1 w-1 animate-pulse rounded-full bg-accent [animation-delay:300ms]" /></span>
